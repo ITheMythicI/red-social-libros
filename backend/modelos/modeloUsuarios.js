@@ -31,9 +31,39 @@ const esquemaUsuario = mongoose.Schema(
             ],
             default: [],
         },
+        librosLeyendo: {
+            type: [
+                {
+                    bookId: { type: String, required: true },
+                    titulo: { type: String, required: true },
+                    autores: { type: [String], default: [] },
+                    portada: { type: String, default: '' },
+                },
+            ],
+            default: [],
+        },
+        librosLeidos: {
+            type: [
+                {
+                    bookId: { type: String, required: true },
+                    titulo: { type: String, required: true },
+                    autores: { type: [String], default: [] },
+                    portada: { type: String, default: '' },
+                },
+            ],
+            default: [],
+        },
         avatarUrl: {
             type: String,
             default: '',
+        },
+        seguidores: {
+            type: [String],
+            default: [],
+        },
+        siguiendo: {
+            type: [String],
+            default: [],
         },
     },
     { timestamps: true }

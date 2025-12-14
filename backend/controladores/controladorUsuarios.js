@@ -4,7 +4,18 @@ const bcrypt = require('bcryptjs');
 const usuario = require('../modelos/modeloUsuarios');
 
 const registroUsuario = asyncHandler(async (req, res) => {
-    const { nombre, email, password, subjectsFavoritos = [], librosFavoritos = [], avatarUrl = '' } = req.body;
+    const { 
+        nombre, 
+        email, 
+        password, 
+        subjectsFavoritos = [], 
+        librosFavoritos = [], 
+        librosLeyendo = [], 
+        librosLeidos = [], 
+        seguidores = [],
+        siguiendo = [],
+        avatarUrl = '' 
+    } = req.body;
 
     if (!nombre || !email || !password) {
         res.status(400);
@@ -26,6 +37,10 @@ const registroUsuario = asyncHandler(async (req, res) => {
         password: passwordEncriptado,
         subjectsFavoritos,
         librosFavoritos,
+        librosLeyendo,
+        librosLeidos,
+        seguidores,
+        siguiendo,
         avatarUrl,
     });
 
@@ -38,8 +53,14 @@ const registroUsuario = asyncHandler(async (req, res) => {
             nombre: user.nombre,
             email: user.email,
             subjectsFavoritos: user.subjectsFavoritos,
-        librosFavoritos: user.librosFavoritos,
-        avatarUrl: user.avatarUrl,
+            librosFavoritos: user.librosFavoritos,
+            librosLeyendo: user.librosLeyendo,
+            librosLeidos: user.librosLeidos,
+            avatarUrl: user.avatarUrl,
+            seguidores: user.seguidores,
+            siguiendo: user.siguiendo,
+            seguidoresCount: user.seguidores.length,
+            siguiendoCount: user.siguiendo.length,
             token: generarTokenJWT(user._id)
         });
     }
@@ -76,7 +97,13 @@ const loginUsuario = asyncHandler(async (req, res) => {
         email: user.email,
         subjectsFavoritos: user.subjectsFavoritos,
         librosFavoritos: user.librosFavoritos,
+        librosLeyendo: user.librosLeyendo,
+        librosLeidos: user.librosLeidos,
         avatarUrl: user.avatarUrl,
+        seguidores: user.seguidores,
+        siguiendo: user.siguiendo,
+        seguidoresCount: user.seguidores.length,
+        siguiendoCount: user.siguiendo.length,
         token: generarTokenJWT(user._id),
     });
 });
@@ -108,8 +135,38 @@ const actualizarSubjectsFavoritos = asyncHandler(async (req, res) => {
         email: req.usuario.email,
         subjectsFavoritos: req.usuario.subjectsFavoritos,
         librosFavoritos: req.usuario.librosFavoritos,
+        librosLeyendo: req.usuario.librosLeyendo,
+        librosLeidos: req.usuario.librosLeidos,
+        avatarUrl: req.usuario.avatarUrl,
     });
 });
+
+const limpiarLibros = (libros = []) =>
+    libros
+        .map((libro) => ({
+            bookId: (libro.bookId || '').toString(),
+            titulo: (libro.titulo || '').toString(),
+            autores: Array.isArray(libro.autores) ? libro.autores.map((a) => a.toString()) : [],
+            portada: libro.portada ? libro.portada.toString() : '',
+        }))
+        .filter((libro) => libro.bookId && libro.titulo);
+
+const responderUsuario = (usuarioDoc, res) => {
+    res.json({
+        _id: usuarioDoc.id,
+        nombre: usuarioDoc.nombre,
+        email: usuarioDoc.email,
+        subjectsFavoritos: usuarioDoc.subjectsFavoritos,
+        librosFavoritos: usuarioDoc.librosFavoritos,
+        librosLeyendo: usuarioDoc.librosLeyendo,
+        librosLeidos: usuarioDoc.librosLeidos,
+        avatarUrl: usuarioDoc.avatarUrl,
+        seguidores: usuarioDoc.seguidores,
+        siguiendo: usuarioDoc.siguiendo,
+        seguidoresCount: usuarioDoc.seguidores.length,
+        siguiendoCount: usuarioDoc.siguiendo.length,
+    });
+};
 
 // PUT /api/usuarios/favoritos
 const actualizarLibrosFavoritos = asyncHandler(async (req, res) => {
@@ -120,26 +177,34 @@ const actualizarLibrosFavoritos = asyncHandler(async (req, res) => {
         throw new Error('El campo "libros" debe ser un arreglo de objetos');
     }
 
-    const limpio = libros
-        .map((libro) => ({
-            bookId: (libro.bookId || '').toString(),
-            titulo: (libro.titulo || '').toString(),
-            autores: Array.isArray(libro.autores) ? libro.autores.map((a) => a.toString()) : [],
-            portada: libro.portada ? libro.portada.toString() : '',
-        }))
-        .filter((libro) => libro.bookId && libro.titulo);
-
-    req.usuario.librosFavoritos = limpio;
+    req.usuario.librosFavoritos = limpiarLibros(libros);
     await req.usuario.save();
 
-    res.json({
-        _id: req.usuario.id,
-        nombre: req.usuario.nombre,
-        email: req.usuario.email,
-        subjectsFavoritos: req.usuario.subjectsFavoritos,
-        librosFavoritos: req.usuario.librosFavoritos,
-        avatarUrl: req.usuario.avatarUrl,
-    });
+    responderUsuario(req.usuario, res);
+});
+
+// PUT /api/usuarios/leyendo
+const actualizarLibrosLeyendo = asyncHandler(async (req, res) => {
+    const { libros } = req.body;
+    if (!Array.isArray(libros)) {
+        res.status(400);
+        throw new Error('El campo "libros" debe ser un arreglo de objetos');
+    }
+    req.usuario.librosLeyendo = limpiarLibros(libros);
+    await req.usuario.save();
+    responderUsuario(req.usuario, res);
+});
+
+// PUT /api/usuarios/leidos
+const actualizarLibrosLeidos = asyncHandler(async (req, res) => {
+    const { libros } = req.body;
+    if (!Array.isArray(libros)) {
+        res.status(400);
+        throw new Error('El campo "libros" debe ser un arreglo de objetos');
+    }
+    req.usuario.librosLeidos = limpiarLibros(libros);
+    await req.usuario.save();
+    responderUsuario(req.usuario, res);
 });
 
 // PUT /api/usuarios/avatar
@@ -154,16 +219,20 @@ const actualizarAvatar = asyncHandler(async (req, res) => {
     req.usuario.avatarUrl = avatarUrl.trim();
     await req.usuario.save();
 
-    res.json({
-        _id: req.usuario.id,
-        nombre: req.usuario.nombre,
-        email: req.usuario.email,
-        subjectsFavoritos: req.usuario.subjectsFavoritos,
-        librosFavoritos: req.usuario.librosFavoritos,
-        avatarUrl: req.usuario.avatarUrl,
-    });
+    responderUsuario(req.usuario, res);
 });
 
+// PUT /api/usuarios/nombre
+const actualizarNombre = asyncHandler(async (req, res) => {
+    const { nombre } = req.body;
+    if (!nombre || !nombre.trim()) {
+        res.status(400);
+        throw new Error('El nombre es requerido');
+    }
+    req.usuario.nombre = nombre.trim();
+    await req.usuario.save();
+    responderUsuario(req.usuario, res);
+});
 
 const generarTokenJWT = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -178,6 +247,9 @@ module.exports = {
     obtenerUsuarioActual,
     actualizarSubjectsFavoritos,
     actualizarLibrosFavoritos,
-    actualizarAvatar, 
+    actualizarLibrosLeyendo,
+    actualizarLibrosLeidos,
+    actualizarAvatar,
+    actualizarNombre, 
 };
 

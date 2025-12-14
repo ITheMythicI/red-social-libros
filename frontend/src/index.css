@@ -304,6 +304,13 @@ a:hover {
   color: var(--accent-strong);
 }
 
+.profile-header {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .avatar-row {
   display: flex;
   gap: 16px;
@@ -323,12 +330,63 @@ a:hover {
   place-items: center;
   font-weight: 700;
   color: var(--accent-strong);
+  position: relative;
 }
 
 .avatar-circle img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.avatar-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.profile-main {
+  display: grid;
+  gap: 10px;
+  min-width: 260px;
+}
+
+.name-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.actions-row {
+  display: flex;
+  gap: 10px;
+}
+
+.counts-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.count-card {
+  min-width: 110px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f8fbf8;
+  display: grid;
+  gap: 4px;
+}
+
+.count-card strong {
+  font-size: 1.2rem;
+  color: var(--accent-strong);
+}
+
+.count-card span {
+  color: var(--muted);
+  font-weight: 600;
 }
 
 .avatar-form {
