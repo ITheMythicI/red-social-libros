@@ -1,38 +1,92 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { login } from "../features/auth/authSlice";
-import { Navigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { login, reset } from "../features/auth/authSlice";
+import { toast } from "react-toastify";
 
-export default function Login() {
-  const dispatch = useDispatch();
-  const { token, loading, error } = useSelector((state) => state.auth);
-
-  const [form, setForm] = useState({
+const Login = () => {
+  const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
-  if (token) return <Navigate to="/home" />;
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { loading, error, token } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (error) toast.error(error);
+  }, [error]);
+
+  useEffect(() => {
+    if (token) {
+      toast.success("Inicio de sesión exitoso");
+      dispatch(reset());
+      navigate("/home", { replace: true });
+    }
+  }, [token, dispatch, navigate]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(login(form));
+    dispatch(login(formData));
   };
 
   return (
-    <div>
-      <h2>Iniciar sesión</h2>
-      <form onSubmit={handleSubmit}>
-        <input type="email" placeholder="Email"
-          onChange={(e) => setForm({ ...form, email: e.target.value })} />
+    <div className="page">
+      <div className="surface-card">
+        <div className="brand">
+          <span role="img" aria-label="book">
+            📚
+          </span>
+          Inicia sesión
+        </div>
+        <p className="subtitle">Continúa explorando recomendaciones.</p>
 
-        <input type="password" placeholder="Password"
-          onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        <form className="form" onSubmit={handleSubmit}>
+          <div className="field">
+            <label htmlFor="email">Correo electrónico</label>
+            <input
+              id="email"
+              className="input"
+              type="email"
+              name="email"
+              placeholder="tucorreo@ejemplo.com"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-        <button type="submit" disabled={loading}>Entrar</button>
+          <div className="field">
+            <label htmlFor="password">Contraseña</label>
+            <input
+              id="password"
+              className="input"
+              type="password"
+              name="password"
+              placeholder="••••••••"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
-      </form>
+          <button className="btn-primary" type="submit" disabled={loading}>
+            {loading ? "Entrando..." : "Entrar"}
+          </button>
+        </form>
+
+        <div className="helper">
+          ¿No tienes cuenta?{" "}
+          <Link className="switch-link" to="/">
+            Regístrate
+          </Link>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default Login;

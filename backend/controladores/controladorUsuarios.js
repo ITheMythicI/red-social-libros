@@ -30,7 +30,12 @@ const registroUsuario = asyncHandler(async (req, res) => {
         res.status(400);
         throw new Error('Datos de usuario no válidos');
     }else{
-        res.status(201).json({_id: usuario.id, nombre: usuario.nombre, email: usuario.email, token: generarTokenJWT(usuario._id)});
+        res.status(201).json({
+            _id: user.id,
+            nombre: user.nombre,
+            email: user.email,
+            token: generarTokenJWT(user._id)
+        });
     }
 });
 

@@ -1,42 +1,121 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { register } from "../features/auth/authSlice";
-import { Navigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { register, reset } from "../features/auth/authSlice";
+import { toast } from "react-toastify";
 
-export default function Register() {
-  const dispatch = useDispatch();
-  const { token, loading, error } = useSelector((state) => state.auth);
-
-  const [form, setForm] = useState({
+const Register = () => {
+  const [formData, setFormData] = useState({
     nombre: "",
     email: "",
     password: "",
+    password2: "",
   });
 
-  if (token) return <Navigate to="/home" />;
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { loading, error } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (error) toast.error(error);
+  }, [error]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(register(form));
+    if (formData.password !== formData.password2) {
+      toast.error("Las contraseñas no coinciden");
+      return;
+    }
+    dispatch(register(formData))
+      .unwrap()
+      .then(() => {
+        toast.success("Registro exitoso. Ahora inicia sesión.");
+        dispatch(reset());
+        navigate("/login");
+      })
+      .catch(() => {});
   };
 
   return (
-    <div>
-      <h2>Registro</h2>
-      <form onSubmit={handleSubmit}>
-        <input type="text" placeholder="Nombre"
-          onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
+    <div className="page">
+      <div className="surface-card">
+        <div className="brand">
+          <span role="img" aria-label="book">
+            📚
+          </span>
+          Crea tu cuenta
+        </div>
+        <p className="subtitle">Únete a la red y comparte tus lecturas.</p>
 
-        <input type="email" placeholder="Email"
-          onChange={(e) => setForm({ ...form, email: e.target.value })} />
+        <form className="form" onSubmit={handleSubmit}>
+          <div className="field">
+            <label htmlFor="nombre">Nombre</label>
+            <input
+              id="nombre"
+              className="input"
+              type="text"
+              name="nombre"
+              placeholder="Tu nombre"
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="email">Correo electrónico</label>
+            <input
+              id="email"
+              className="input"
+              type="email"
+              name="email"
+              placeholder="tucorreo@ejemplo.com"
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="password">Contraseña</label>
+            <input
+              id="password"
+              className="input"
+              type="password"
+              name="password"
+              placeholder="••••••••"
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="password2">Confirmar contraseña</label>
+            <input
+              id="password2"
+              className="input"
+              type="password"
+              name="password2"
+              placeholder="••••••••"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-        <input type="password" placeholder="Password"
-          onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          <button className="btn-primary" type="submit" disabled={loading}>
+            {loading ? "Creando cuenta..." : "Crear cuenta"}
+          </button>
+        </form>
 
-        <button type="submit" disabled={loading}>Registrarse</button>
-
-        {error && <p style={{ color: "red" }}>{error}</p>}
-      </form>
+        <div className="helper">
+          ¿Ya tienes cuenta?{" "}
+          <Link className="switch-link" to="/login">
+            Inicia sesión
+          </Link>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default Register;
