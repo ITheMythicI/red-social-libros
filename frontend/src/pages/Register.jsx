@@ -15,7 +15,7 @@ const Register = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading, error, token, user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (error) toast.error(error);
@@ -34,12 +34,22 @@ const Register = () => {
     dispatch(register(formData))
       .unwrap()
       .then(() => {
-        toast.success("Registro exitoso. Ahora inicia sesión.");
+        toast.success("Registro exitoso. Personaliza tu perfil.");
         dispatch(reset());
-        navigate("/login");
+        navigate("/onboarding");
       })
       .catch(() => {});
   };
+
+  useEffect(() => {
+    if (token && user) {
+      const needsOnboarding =
+        !user.subjectsFavoritos?.length || !user.librosFavoritos?.length;
+      if (needsOnboarding) {
+        navigate("/onboarding", { replace: true });
+      }
+    }
+  }, [token, user, navigate]);
 
   return (
     <div className="page">

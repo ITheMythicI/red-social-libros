@@ -12,19 +12,21 @@ const Login = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, token } = useSelector((state) => state.auth);
+  const { loading, error, token, user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (error) toast.error(error);
   }, [error]);
 
   useEffect(() => {
-    if (token) {
+    if (token && user) {
       toast.success("Inicio de sesión exitoso");
       dispatch(reset());
-      navigate("/home", { replace: true });
+      const needsOnboarding =
+        !user.subjectsFavoritos?.length || !user.librosFavoritos?.length;
+      navigate(needsOnboarding ? "/onboarding" : "/home", { replace: true });
     }
-  }, [token, dispatch, navigate]);
+  }, [token, user, dispatch, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

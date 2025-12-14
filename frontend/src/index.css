@@ -214,6 +214,97 @@ a:hover {
   color: var(--muted);
 }
 
+.chips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.chip {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #f7faf7;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+  transition: all 0.15s ease;
+}
+
+.chip:hover {
+  border-color: var(--accent);
+}
+
+.chip-selected {
+  background: rgba(15, 61, 46, 0.1);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.search-bar {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.book-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: #f8fbf8;
+  display: flex;
+  gap: 10px;
+}
+
+.book-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 8px 18px rgba(15, 61, 46, 0.12);
+}
+
+.book-cover {
+  width: 80px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #eef3ee;
+}
+
+.book-cover.placeholder {
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.book-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.btn-secondary {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+
+.muted {
+  color: var(--muted);
+  margin: 0;
+}
+
 @media (max-width: 540px) {
   .surface-card {
     padding: 22px;

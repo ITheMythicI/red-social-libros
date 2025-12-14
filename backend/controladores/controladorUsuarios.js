@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const usuario = require('../modelos/modeloUsuarios');
 
 const registroUsuario = asyncHandler(async (req, res) => {
-    const { nombre, email, password } = req.body;
+    const { nombre, email, password, subjectsFavoritos = [], librosFavoritos = [] } = req.body;
 
     if (!nombre || !email || !password) {
         res.status(400);
@@ -24,6 +24,8 @@ const registroUsuario = asyncHandler(async (req, res) => {
         nombre,
         email,
         password: passwordEncriptado,
+        subjectsFavoritos,
+        librosFavoritos,
     });
 
     if(!user){
@@ -34,6 +36,8 @@ const registroUsuario = asyncHandler(async (req, res) => {
             _id: user.id,
             nombre: user.nombre,
             email: user.email,
+            subjectsFavoritos: user.subjectsFavoritos,
+        librosFavoritos: user.librosFavoritos,
             token: generarTokenJWT(user._id)
         });
     }
@@ -68,6 +72,8 @@ const loginUsuario = asyncHandler(async (req, res) => {
         _id: user.id,
         nombre: user.nombre,
         email: user.email,
+        subjectsFavoritos: user.subjectsFavoritos,
+        librosFavoritos: user.librosFavoritos,
         token: generarTokenJWT(user._id),
     });
 });
@@ -75,6 +81,61 @@ const loginUsuario = asyncHandler(async (req, res) => {
 
 const obtenerUsuarioActual = asyncHandler(async (req, res) => {
   res.json(req.usuario);
+});
+
+// PUT /api/usuarios/subjects
+const actualizarSubjectsFavoritos = asyncHandler(async (req, res) => {
+    const { subjects } = req.body;
+
+    if (!Array.isArray(subjects)) {
+        res.status(400);
+        throw new Error('El campo "subjects" debe ser un arreglo de strings');
+    }
+
+    const limpio = subjects
+        .map((s) => (s || '').toString().trim())
+        .filter((s) => s.length > 0);
+
+    req.usuario.subjectsFavoritos = limpio;
+    await req.usuario.save();
+
+    res.json({
+        _id: req.usuario.id,
+        nombre: req.usuario.nombre,
+        email: req.usuario.email,
+        subjectsFavoritos: req.usuario.subjectsFavoritos,
+        librosFavoritos: req.usuario.librosFavoritos,
+    });
+});
+
+// PUT /api/usuarios/favoritos
+const actualizarLibrosFavoritos = asyncHandler(async (req, res) => {
+    const { libros } = req.body;
+
+    if (!Array.isArray(libros)) {
+        res.status(400);
+        throw new Error('El campo "libros" debe ser un arreglo de objetos');
+    }
+
+    const limpio = libros
+        .map((libro) => ({
+            bookId: (libro.bookId || '').toString(),
+            titulo: (libro.titulo || '').toString(),
+            autores: Array.isArray(libro.autores) ? libro.autores.map((a) => a.toString()) : [],
+            portada: libro.portada ? libro.portada.toString() : '',
+        }))
+        .filter((libro) => libro.bookId && libro.titulo);
+
+    req.usuario.librosFavoritos = limpio;
+    await req.usuario.save();
+
+    res.json({
+        _id: req.usuario.id,
+        nombre: req.usuario.nombre,
+        email: req.usuario.email,
+        subjectsFavoritos: req.usuario.subjectsFavoritos,
+        librosFavoritos: req.usuario.librosFavoritos,
+    });
 });
 
 
@@ -88,6 +149,8 @@ const generarTokenJWT = (id) => {
 module.exports = { 
     registroUsuario, 
     loginUsuario, 
-    obtenerUsuarioActual 
+    obtenerUsuarioActual,
+    actualizarSubjectsFavoritos,
+    actualizarLibrosFavoritos, 
 };
 
