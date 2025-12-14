@@ -49,6 +49,14 @@ const updateFavoritos = async (libros) => {
   return res.data;
 };
 
+const updateAvatar = async (avatarUrl) => {
+  const res = await api.put("/usuarios/avatar", { avatarUrl });
+  if (res.data) {
+    localStorage.setItem("user", JSON.stringify(res.data));
+  }
+  return res.data;
+};
+
 const authService = {
   register,
   login,
@@ -56,6 +64,7 @@ const authService = {
   getMe,
   updateSubjects,
   updateFavoritos,
+  updateAvatar,
 };
 
 export default authService;

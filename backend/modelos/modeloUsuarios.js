@@ -31,6 +31,10 @@ const esquemaUsuario = mongoose.Schema(
             ],
             default: [],
         },
+        avatarUrl: {
+            type: String,
+            default: '',
+        },
     },
     { timestamps: true }
 );

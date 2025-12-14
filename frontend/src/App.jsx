@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Onboarding from "./pages/Onboarding";
+import Profile from "./pages/Profile";
 
 function App() {
   const { token, user } = useSelector((state) => state.auth);
@@ -52,6 +53,14 @@ function App() {
           element={
             <Protected>
               <Home />
+            </Protected>
+          }
+        />
+        <Route
+          path="/perfil"
+          element={
+            <Protected>
+              <Profile />
             </Protected>
           }
         />

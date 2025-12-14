@@ -175,9 +175,11 @@ const Onboarding = () => {
     </>
   );
 
+  const cardClass = `surface-card ${step === "favorites" ? "surface-wide" : ""}`;
+
   return (
     <div className="page">
-      <div className="surface-card">
+      <div className={cardClass}>
         <div className="brand">
           <span role="img" aria-label="book">
             📚
