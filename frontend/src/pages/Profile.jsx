@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchMe,
@@ -9,7 +9,6 @@ import {
   updateLeidos,
 } from "../features/auth/authSlice";
 import { toast } from "react-toastify";
-import { useState } from "react";
 import { searchBooks } from "../api/books";
 
 const Profile = () => {
@@ -23,6 +22,7 @@ const Profile = () => {
   const [results, setResults] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [targetList, setTargetList] = useState("favoritos"); // favoritos | leyendo | leidos
+  const [showModal, setShowModal] = useState(false);
   const seguidoresCount = user?.seguidoresCount ?? user?.seguidores?.length ?? 0;
   const siguiendoCount = user?.siguiendoCount ?? user?.siguiendo?.length ?? 0;
 
@@ -70,6 +70,15 @@ const Profile = () => {
       setLoadingSearch(false);
     }
   };
+
+  const openModalFor = (listName) => {
+    setTargetList(listName);
+    setShowModal(true);
+    setQuery("");
+    setResults([]);
+  };
+
+  const closeModal = () => setShowModal(false);
 
   const syncList = (listName, data) => {
     switch (listName) {
@@ -155,7 +164,9 @@ const Profile = () => {
         </div>
 
         <section>
-          <h3>Géneros favoritos</h3>
+          <div className="section-title">
+            <h3>Géneros favoritos</h3>
+          </div>
           {subjects.length === 0 ? (
             <p className="muted">Aún no configuras tus géneros favoritos.</p>
           ) : (
@@ -170,7 +181,12 @@ const Profile = () => {
         </section>
 
         <section>
-          <h3>Libros favoritos</h3>
+          <div className="section-title">
+            <h3>Libros favoritos</h3>
+            <button className="icon-button" type="button" onClick={() => openModalFor("favoritos")} title="Editar favoritos">
+              ✏️
+            </button>
+          </div>
           <div className="cards-grid">
             {favoritos.map((book) => (
               <div key={book.bookId} className="book-card">
@@ -193,7 +209,12 @@ const Profile = () => {
         </section>
 
         <section>
-          <h3>Libros que estoy leyendo</h3>
+          <div className="section-title">
+            <h3>Libros que estoy leyendo</h3>
+            <button className="icon-button" type="button" onClick={() => openModalFor("leyendo")} title="Editar leyendo">
+              ✏️
+            </button>
+          </div>
           <div className="cards-grid">
             {leyendo.map((book) => (
               <div key={book.bookId} className="book-card">
@@ -216,7 +237,12 @@ const Profile = () => {
         </section>
 
         <section>
-          <h3>Libros leídos</h3>
+          <div className="section-title">
+            <h3>Libros leídos</h3>
+            <button className="icon-button" type="button" onClick={() => openModalFor("leidos")} title="Editar leídos">
+              ✏️
+            </button>
+          </div>
           <div className="cards-grid">
             {leidos.map((book) => (
               <div key={book.bookId} className="book-card">
@@ -237,45 +263,48 @@ const Profile = () => {
             {leidos.length === 0 && <p className="muted">Aún no marcas libros como leídos.</p>}
           </div>
         </section>
-
-        <section>
-          <h3>Buscar libros y agregar</h3>
-          <form className="search-bar" onSubmit={handleSearch}>
-            <input
-              className="input"
-              placeholder="Ej. El señor de los anillos..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            <select className="input" value={targetList} onChange={(e) => setTargetList(e.target.value)}>
-              <option value="favoritos">Favoritos</option>
-              <option value="leyendo">Leyendo</option>
-              <option value="leidos">Leídos</option>
-            </select>
-            <button className="btn-primary" type="submit" disabled={loadingSearch}>
-              {loadingSearch ? "Buscando..." : "Buscar"}
-            </button>
-          </form>
-          <div className="cards-grid">
-            {results.map((book) => (
-              <div key={book.bookId} className="book-card">
-                {book.portada ? (
-                  <img src={book.portada} alt={book.titulo} className="book-cover" />
-                ) : (
-                  <div className="book-cover placeholder">Sin portada</div>
-                )}
-                <div className="book-info">
-                  <h4>{book.titulo}</h4>
-                  <p className="muted">{(book.autores || []).join(", ")}</p>
-                  <button className="btn-secondary" type="button" onClick={() => addBook(book)}>
-                    Agregar a {targetList}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
       </div>
+
+      {showModal && (
+        <div className="modal-backdrop" onClick={closeModal}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Agregar a {targetList}</h3>
+              <button className="icon-button" onClick={closeModal}>✕</button>
+            </div>
+            <form className="search-bar" onSubmit={handleSearch}>
+              <input
+                className="input"
+                placeholder="Busca un libro..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              <button className="btn-primary" type="submit" disabled={loadingSearch}>
+                {loadingSearch ? "Buscando..." : "Buscar"}
+              </button>
+            </form>
+            <div className="cards-grid">
+              {results.map((book) => (
+                <div key={book.bookId} className="book-card">
+                  {book.portada ? (
+                    <img src={book.portada} alt={book.titulo} className="book-cover" />
+                  ) : (
+                    <div className="book-cover placeholder">Sin portada</div>
+                  )}
+                  <div className="book-info">
+                    <h4>{book.titulo}</h4>
+                    <p className="muted">{(book.autores || []).join(", ")}</p>
+                    <button className="btn-secondary" type="button" onClick={() => addBook(book)}>
+                      Agregar a {targetList}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {results.length === 0 && <p className="muted">Busca un título para agregar.</p>}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
