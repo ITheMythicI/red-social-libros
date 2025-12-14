@@ -16,6 +16,21 @@ const esquemaUsuario = mongoose.Schema(
             type: String,
             required: [true, 'La contraseña es requerida'],
         },
+        subjectsFavoritos: {
+            type: [String],
+            default: [],
+        },
+        librosFavoritos: {
+            type: [
+                {
+                    bookId: { type: String, required: true },
+                    titulo: { type: String, required: true },
+                    autores: { type: [String], default: [] },
+                    portada: { type: String, default: '' },
+                },
+            ],
+            default: [],
+        },
     },
     { timestamps: true }
 );

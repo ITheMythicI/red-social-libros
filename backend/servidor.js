@@ -23,6 +23,7 @@ app.use(cors({
 // });
 app.use('/api/tareas', require('./rutas/rutasTareas'));
 app.use('/api/usuarios', require('./rutas/rutasUsuarios'));
+app.use('/api/libros', require('./rutas/rutasLibros'));
 
 app.get('/', (req, res) => {
     res.redirect('/api/tareas');
