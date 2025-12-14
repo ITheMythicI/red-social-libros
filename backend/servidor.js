@@ -1,6 +1,7 @@
 const express = require('express');
 const { errorHandler } = require('./middleware/errorMiddleware');
 const dotenv = require('dotenv').config();
+const cors = require('cors');
 const dbConexion = require('./conexion/dbConexion');
 const puerto = process.env.PUERTO || 5000;
 
@@ -9,6 +10,13 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
+app.use(cors({
+    origin: [
+        'http://localhost:5173',
+        'http://fs12025.jcarlos19.com'
+    ],
+    credentials: true,
+}));
 
 // app.get('/api/tareas', (req, res) => {
 //     res.status(200).json({ mensaje: 'Obtener todas las tareas' });
