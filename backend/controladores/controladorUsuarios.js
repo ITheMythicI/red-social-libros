@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const usuario = require('../modelos/modeloUsuarios');
 
 const registroUsuario = asyncHandler(async (req, res) => {
-    const { nombre, email, password, subjectsFavoritos = [], librosFavoritos = [] } = req.body;
+    const { nombre, email, password, subjectsFavoritos = [], librosFavoritos = [], avatarUrl = '' } = req.body;
 
     if (!nombre || !email || !password) {
         res.status(400);
@@ -26,6 +26,7 @@ const registroUsuario = asyncHandler(async (req, res) => {
         password: passwordEncriptado,
         subjectsFavoritos,
         librosFavoritos,
+        avatarUrl,
     });
 
     if(!user){
@@ -38,6 +39,7 @@ const registroUsuario = asyncHandler(async (req, res) => {
             email: user.email,
             subjectsFavoritos: user.subjectsFavoritos,
         librosFavoritos: user.librosFavoritos,
+        avatarUrl: user.avatarUrl,
             token: generarTokenJWT(user._id)
         });
     }
@@ -74,6 +76,7 @@ const loginUsuario = asyncHandler(async (req, res) => {
         email: user.email,
         subjectsFavoritos: user.subjectsFavoritos,
         librosFavoritos: user.librosFavoritos,
+        avatarUrl: user.avatarUrl,
         token: generarTokenJWT(user._id),
     });
 });
@@ -135,6 +138,29 @@ const actualizarLibrosFavoritos = asyncHandler(async (req, res) => {
         email: req.usuario.email,
         subjectsFavoritos: req.usuario.subjectsFavoritos,
         librosFavoritos: req.usuario.librosFavoritos,
+        avatarUrl: req.usuario.avatarUrl,
+    });
+});
+
+// PUT /api/usuarios/avatar
+const actualizarAvatar = asyncHandler(async (req, res) => {
+    const { avatarUrl } = req.body;
+
+    if (typeof avatarUrl !== 'string') {
+        res.status(400);
+        throw new Error('El campo "avatarUrl" debe ser un string');
+    }
+
+    req.usuario.avatarUrl = avatarUrl.trim();
+    await req.usuario.save();
+
+    res.json({
+        _id: req.usuario.id,
+        nombre: req.usuario.nombre,
+        email: req.usuario.email,
+        subjectsFavoritos: req.usuario.subjectsFavoritos,
+        librosFavoritos: req.usuario.librosFavoritos,
+        avatarUrl: req.usuario.avatarUrl,
     });
 });
 
@@ -151,6 +177,7 @@ module.exports = {
     loginUsuario, 
     obtenerUsuarioActual,
     actualizarSubjectsFavoritos,
-    actualizarLibrosFavoritos, 
+    actualizarLibrosFavoritos,
+    actualizarAvatar, 
 };
 

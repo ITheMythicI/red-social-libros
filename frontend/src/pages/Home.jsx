@@ -28,8 +28,9 @@ const Home = () => {
           ))}
         </div>
 
-        <div className="helper">
-          Próximamente: feed de libros, reseñas y recomendaciones personalizadas.
+        <div className="helper" style={{ justifyContent: "space-between" }}>
+          <span>Próximamente: feed de libros, reseñas y recomendaciones personalizadas.</span>
+          <a className="switch-link" href="/perfil">Mi perfil</a>
         </div>
       </div>
     </div>

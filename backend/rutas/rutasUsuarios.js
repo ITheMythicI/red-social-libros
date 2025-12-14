@@ -7,6 +7,7 @@ const {
     obtenerUsuarioActual,
     actualizarSubjectsFavoritos,
     actualizarLibrosFavoritos,
+    actualizarAvatar,
 } = require('../controladores/controladorUsuarios');
 
 const { proteger } = require('../middleware/authMiddleware');
@@ -19,5 +20,6 @@ router.post('/login', loginUsuario);
 router.get('/actual', proteger, obtenerUsuarioActual);
 router.put('/subjects', proteger, actualizarSubjectsFavoritos);
 router.put('/favoritos', proteger, actualizarLibrosFavoritos);
+router.put('/avatar', proteger, actualizarAvatar);
 
 module.exports = router;

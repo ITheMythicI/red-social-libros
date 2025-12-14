@@ -73,6 +73,17 @@ export const updateFavoritos = createAsyncThunk(
   }
 );
 
+export const updateAvatar = createAsyncThunk(
+  "auth/updateAvatar",
+  async (avatarUrl, thunkAPI) => {
+    try {
+      return await authService.updateAvatar(avatarUrl);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data?.mensaje || "Error al guardar avatar");
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -137,6 +148,10 @@ const authSlice = createSlice({
       })
       // UPDATE FAVORITOS
       .addCase(updateFavoritos.fulfilled, (state, action) => {
+        state.user = { ...state.user, ...action.payload };
+      })
+      // UPDATE AVATAR
+      .addCase(updateAvatar.fulfilled, (state, action) => {
         state.user = { ...state.user, ...action.payload };
       });
   },
