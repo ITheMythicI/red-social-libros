@@ -57,6 +57,26 @@ const updateAvatar = async (avatarUrl) => {
   return res.data;
 };
 
+const updateName = async (nombre) => {
+  const res = await api.put("/usuarios/nombre", { nombre });
+  if (res.data) {
+    localStorage.setItem("user", JSON.stringify(res.data));
+  }
+  return res.data;
+};
+
+const updateLeyendo = async (libros) => {
+  const res = await api.put("/usuarios/leyendo", { libros });
+  if (res.data) localStorage.setItem("user", JSON.stringify(res.data));
+  return res.data;
+};
+
+const updateLeidos = async (libros) => {
+  const res = await api.put("/usuarios/leidos", { libros });
+  if (res.data) localStorage.setItem("user", JSON.stringify(res.data));
+  return res.data;
+};
+
 const authService = {
   register,
   login,
@@ -65,6 +85,9 @@ const authService = {
   updateSubjects,
   updateFavoritos,
   updateAvatar,
+  updateName,
+  updateLeyendo,
+  updateLeidos,
 };
 
 export default authService;

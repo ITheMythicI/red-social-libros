@@ -73,6 +73,36 @@ export const updateFavoritos = createAsyncThunk(
   }
 );
 
+export const updateName = createAsyncThunk("auth/updateName", async (nombre, thunkAPI) => {
+  try {
+    return await authService.updateName(nombre);
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.mensaje || "Error al guardar nombre");
+  }
+});
+
+export const updateLeyendo = createAsyncThunk(
+  "auth/updateLeyendo",
+  async (libros, thunkAPI) => {
+    try {
+      return await authService.updateLeyendo(libros);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data?.mensaje || "Error al guardar leyendo");
+    }
+  }
+);
+
+export const updateLeidos = createAsyncThunk(
+  "auth/updateLeidos",
+  async (libros, thunkAPI) => {
+    try {
+      return await authService.updateLeidos(libros);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data?.mensaje || "Error al guardar leídos");
+    }
+  }
+);
+
 export const updateAvatar = createAsyncThunk(
   "auth/updateAvatar",
   async (avatarUrl, thunkAPI) => {
@@ -148,6 +178,18 @@ const authSlice = createSlice({
       })
       // UPDATE FAVORITOS
       .addCase(updateFavoritos.fulfilled, (state, action) => {
+        state.user = { ...state.user, ...action.payload };
+      })
+      // UPDATE NOMBRE
+      .addCase(updateName.fulfilled, (state, action) => {
+        state.user = { ...state.user, ...action.payload };
+      })
+      // UPDATE LEYENDO
+      .addCase(updateLeyendo.fulfilled, (state, action) => {
+        state.user = { ...state.user, ...action.payload };
+      })
+      // UPDATE LEIDOS
+      .addCase(updateLeidos.fulfilled, (state, action) => {
         state.user = { ...state.user, ...action.payload };
       })
       // UPDATE AVATAR
