@@ -1,53 +1,55 @@
-import { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { login, reset } from "./markmale/authSlice";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Home from "./pages/Home";
 
 function App() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const { token } = useSelector((state) => state.auth);
 
-  const dispatch = useDispatch();
-  const { usuario, isLoading, isError, isSuccess, message } = useSelector(
-    (state) => state.auth
-  );
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const Protected = ({ children }) => {
+    if (!token) return <Navigate to="/login" replace />;
+    return children;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    dispatch(login(formData));
+  const RedirectIfAuth = ({ children }) => {
+    if (token) return <Navigate to="/home" replace />;
+    return children;
   };
 
   return (
-    <div style={{ padding: "40px" }}>
-      <h1>Iniciar sesión</h1>
-
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          onChange={handleChange}
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <RedirectIfAuth>
+              <Register />
+            </RedirectIfAuth>
+          }
         />
-
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          onChange={handleChange}
+        <Route
+          path="/login"
+          element={
+            <RedirectIfAuth>
+              <Login />
+            </RedirectIfAuth>
+          }
         />
-
-        <button type="submit">Entrar</button>
-      </form>
-
-      {isLoading && <p>Cargando...</p>}
-      {isError && <p style={{ color: "red" }}>Error: {message}</p>}
-      {isSuccess && <p style={{ color: "green" }}>Autenticado correctamente</p>}
-    </div>
+        <Route
+          path="/home"
+          element={
+            <Protected>
+              <Home />
+            </Protected>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <ToastContainer position="top-right" theme="light" />
+    </BrowserRouter>
   );
 }
 
