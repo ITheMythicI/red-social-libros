@@ -290,6 +290,14 @@ const Profile = () => {
             <div className="profile-info">
               <div className="profile-name-section">
                 <h2>{user?.nombre || "Usuario"}</h2>
+                <button
+                  className="btn-secondary"
+                  type="button"
+                  onClick={() => navigate("/configuracion")}
+                  style={{ marginLeft: "8px", padding: "6px 10px" }}
+                >
+                  Configuración
+                </button>
                 <button className="icon-button" onClick={() => {
                   setNameInput(user?.nombre || "");
                   setShowNameModal(true);

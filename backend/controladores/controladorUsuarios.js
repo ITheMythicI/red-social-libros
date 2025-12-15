@@ -381,6 +381,20 @@ const bloquearUsuario = asyncHandler(async (req, res) => {
     });
 });
 
+// GET /api/usuarios/bloqueados - Listar usuarios bloqueados por el usuario actual
+const obtenerUsuariosBloqueados = asyncHandler(async (req, res) => {
+    const usuarioActual = await usuario.findById(req.usuario._id);
+
+    if (!usuarioActual || !usuarioActual.usuariosBloqueados || usuarioActual.usuariosBloqueados.length === 0) {
+        return res.json([]);
+    }
+
+    const bloqueados = await usuario.find({ _id: { $in: usuarioActual.usuariosBloqueados } })
+        .select('nombre avatarUrl');
+
+    res.json(bloqueados);
+});
+
 const generarTokenJWT = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '30d'
@@ -401,5 +415,6 @@ module.exports = {
     actualizarNombre,
     seguirUsuario,
     bloquearUsuario,
+    obtenerUsuariosBloqueados,
 };
 

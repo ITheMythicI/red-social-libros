@@ -14,6 +14,7 @@ const {
     actualizarLibrosLeidos,
     seguirUsuario,
     bloquearUsuario,
+    obtenerUsuariosBloqueados,
 } = require('../controladores/controladorUsuarios');
 
 const { proteger } = require('../middleware/authMiddleware');
@@ -30,6 +31,7 @@ router.put('/avatar', proteger, actualizarAvatar);
 router.put('/nombre', proteger, actualizarNombre);
 router.put('/leyendo', proteger, actualizarLibrosLeyendo);
 router.put('/leidos', proteger, actualizarLibrosLeidos);
+router.get('/bloqueados', proteger, obtenerUsuariosBloqueados);
 router.get('/:userId', proteger, obtenerUsuarioPorId);
 router.put('/:userId/seguir', proteger, seguirUsuario);
 router.put('/:userId/bloquear', proteger, bloquearUsuario);
