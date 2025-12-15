@@ -1,3 +1,5 @@
+import Navbar from "../components/Navbar";
+
 const Home = () => {
   const highlights = [
     { title: "Lee y comparte", desc: "Sigue a otros lectores y descubre sus reseñas." },
@@ -33,6 +35,7 @@ const Home = () => {
           <a className="switch-link" href="/perfil">Mi perfil</a>
         </div>
       </div>
+      <Navbar />
     </div>
   );
 };

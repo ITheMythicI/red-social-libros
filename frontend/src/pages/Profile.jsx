@@ -11,7 +11,8 @@ import {
 } from "../features/auth/authSlice";
 import { toast } from "react-toastify";
 import { searchBooks } from "../api/books";
-import { createPost } from "../api/posts";
+import { createPost, getUserPosts, toggleLike, toggleDislike, createComment } from "../api/posts";
+import Navbar from "../components/Navbar";
 
 const SUBJECTS_OPTIONS = [
   "Ficción",
@@ -52,6 +53,9 @@ const Profile = () => {
   const [searchPostQuery, setSearchPostQuery] = useState("");
   const [postBookResults, setPostBookResults] = useState([]);
   const [loadingPostSearch, setLoadingPostSearch] = useState(false);
+  const [userPosts, setUserPosts] = useState([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [commentText, setCommentText] = useState({});
   const seguidoresCount = user?.seguidoresCount ?? user?.seguidores?.length ?? 0;
   const siguiendoCount = user?.siguiendoCount ?? user?.siguiendo?.length ?? 0;
 
@@ -60,6 +64,23 @@ const Profile = () => {
       dispatch(fetchMe());
     }
   }, [user, dispatch]);
+
+  useEffect(() => {
+    const loadUserPosts = async () => {
+      if (user?._id) {
+        try {
+          setLoadingPosts(true);
+          const posts = await getUserPosts(user._id);
+          setUserPosts(posts);
+        } catch (err) {
+          console.error("Error loading posts:", err);
+        } finally {
+          setLoadingPosts(false);
+        }
+      }
+    };
+    loadUserPosts();
+  }, [user?._id]);
 
   const subjects = user?.subjectsFavoritos || [];
   const initials = (user?.nombre || "U").trim().slice(0, 2).toUpperCase();
@@ -125,15 +146,47 @@ const Profile = () => {
       return;
     }
     try {
-      await createPost({ texto: postText, libro: postBook });
+      const newPost = await createPost({ texto: postText, libro: postBook });
       toast.success("Post creado");
       setPostText("");
       setPostBook(null);
       setSearchPostQuery("");
       setPostBookResults([]);
       setShowPostModal(false);
+      // Agregar el post nuevo al inicio
+      setUserPosts([newPost, ...userPosts]);
     } catch (err) {
       toast.error(err.response?.data?.mensaje || "Error al crear post");
+    }
+  };
+
+  const handleToggleLike = async (postId) => {
+    try {
+      const updated = await toggleLike(postId);
+      setUserPosts(userPosts.map((p) => (p._id === postId ? updated : p)));
+    } catch (err) {
+      toast.error("Error al dar like");
+    }
+  };
+
+  const handleToggleDislike = async (postId) => {
+    try {
+      const updated = await toggleDislike(postId);
+      setUserPosts(userPosts.map((p) => (p._id === postId ? updated : p)));
+    } catch (err) {
+      toast.error("Error al dar dislike");
+    }
+  };
+
+  const handleAddComment = async (postId) => {
+    const texto = commentText[postId];
+    if (!texto || !texto.trim()) return;
+    try {
+      const updated = await createComment(postId, texto);
+      setUserPosts(userPosts.map((p) => (p._id === postId ? updated : p)));
+      setCommentText({ ...commentText, [postId]: "" });
+    } catch (err) {
+      toast.error("Error al comentar");
     }
   };
 
@@ -347,6 +400,88 @@ const Profile = () => {
             {leidos.length === 0 && <p className="muted">Aún no marcas libros como leídos.</p>}
           </div>
         </section>
+
+        <section>
+          <div className="section-title">
+            <h3>Mis posts</h3>
+          </div>
+          {loadingPosts ? (
+            <p className="muted">Cargando posts...</p>
+          ) : userPosts.length === 0 ? (
+            <p className="muted">Aún no has creado posts.</p>
+          ) : (
+            <div className="posts-list">
+              {userPosts.map((post) => (
+                <div key={post._id} className="post-card">
+                  <div className="post-header">
+                    <div className="post-author">
+                      {post.autor?.avatarUrl ? (
+                        <img src={post.autor.avatarUrl} alt={post.autor.nombre} className="post-avatar" />
+                      ) : (
+                        <div className="post-avatar">{(post.autor?.nombre || "U").slice(0, 2).toUpperCase()}</div>
+                      )}
+                      <div>
+                        <strong>{post.autor?.nombre || "Usuario"}</strong>
+                        <p className="muted" style={{ fontSize: '0.85rem', margin: 0 }}>
+                          {new Date(post.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="post-text">{post.texto}</p>
+                  {post.libro && (
+                    <div className="post-book">
+                      {post.libro.portada && <img src={post.libro.portada} alt={post.libro.titulo} />}
+                      <div>
+                        <strong>{post.libro.titulo}</strong>
+                        <p className="muted">{(post.libro.autores || []).join(", ")}</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="post-actions">
+                    <button onClick={() => handleToggleLike(post._id)} className="action-btn">
+                      👍 {post.likes?.length || 0}
+                    </button>
+                    <button onClick={() => handleToggleDislike(post._id)} className="action-btn">
+                      👎 {post.dislikes?.length || 0}
+                    </button>
+                    <span className="muted">💬 {post.comentarios?.length || 0}</span>
+                  </div>
+                  {post.comentarios && post.comentarios.length > 0 && (
+                    <div className="comments-list">
+                      {post.comentarios.map((comment) => (
+                        <div key={comment._id} className="comment">
+                          <strong>{comment.autor?.nombre || "Usuario"}</strong>
+                          <p>{comment.texto}</p>
+                          <div className="comment-actions">
+                            <span className="muted">👍 {comment.likes?.length || 0}</span>
+                            <span className="muted">👎 {comment.dislikes?.length || 0}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="comment-form">
+                    <input
+                      className="input"
+                      placeholder="Escribe un comentario..."
+                      value={commentText[post._id] || ""}
+                      onChange={(e) => setCommentText({ ...commentText, [post._id]: e.target.value })}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          handleAddComment(post._id);
+                        }
+                      }}
+                    />
+                    <button className="btn-secondary" onClick={() => handleAddComment(post._id)}>
+                      Comentar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
 
       {showModal && (
@@ -497,6 +632,7 @@ const Profile = () => {
           </div>
         </div>
       )}
+      <Navbar />
     </div>
   );
 };

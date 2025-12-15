@@ -3,6 +3,7 @@ const router = express.Router();
 const {
     crearPost,
     obtenerPosts,
+    obtenerPostsUsuario,
     obtenerPost,
     toggleLike,
     toggleDislike,
@@ -15,6 +16,7 @@ const { proteger } = require('../middleware/authMiddleware');
 // Todas las rutas protegidas
 router.post('/', proteger, crearPost);
 router.get('/', proteger, obtenerPosts);
+router.get('/usuario/:userId', proteger, obtenerPostsUsuario);
 router.get('/:id', proteger, obtenerPost);
 router.put('/:id/like', proteger, toggleLike);
 router.put('/:id/dislike', proteger, toggleDislike);

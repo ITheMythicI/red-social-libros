@@ -30,6 +30,15 @@ const obtenerPosts = asyncHandler(async (req, res) => {
     res.json(posts);
 });
 
+// GET /api/posts/usuario/:userId - Obtener posts de un usuario
+const obtenerPostsUsuario = asyncHandler(async (req, res) => {
+    const posts = await Post.find({ autor: req.params.userId })
+        .populate('autor', 'nombre avatarUrl')
+        .populate('comentarios.autor', 'nombre avatarUrl')
+        .sort({ createdAt: -1 });
+    res.json(posts);
+});
+
 // GET /api/posts/:id - Obtener un post
 const obtenerPost = asyncHandler(async (req, res) => {
     const post = await Post.findById(req.params.id)
@@ -209,6 +218,7 @@ const toggleDislikeComentario = asyncHandler(async (req, res) => {
 module.exports = {
     crearPost,
     obtenerPosts,
+    obtenerPostsUsuario,
     obtenerPost,
     toggleLike,
     toggleDislike,
