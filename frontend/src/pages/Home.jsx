@@ -61,20 +61,22 @@ const Home = () => {
       });
     });
 
-    // Agregar solo un dato curioso al azar
-    if (curiousFacts.length > 0) {
-      const randomFact = curiousFacts[Math.floor(Math.random() * curiousFacts.length)];
+    // Agregar todos los datos curiosos mezclados
+    curiousFacts.forEach((fact, index) => {
       items.push({ 
         type: 'curious-fact', 
-        data: randomFact, 
-        timestamp: new Date(Date.now() - 10 * 60000)
+        data: fact, 
+        timestamp: new Date(Date.now() - (index + 5) * 60000) // Espaciados por minuto
       });
-    }
+    });
 
-    // Ordenar por timestamp (más reciente primero)
-    items.sort((a, b) => b.timestamp - a.timestamp);
+    // Mezclar aleatoriamente todos los items antes de ordenar
+    const shuffled = items.sort(() => Math.random() - 0.5);
     
-    setFeedItems(items);
+    // Ordenar por timestamp (más reciente primero)
+    shuffled.sort((a, b) => b.timestamp - a.timestamp);
+    
+    setFeedItems(shuffled);
   }, [posts, suggestions, curiousFacts]);
 
   const handleToggleLike = async (postId) => {
