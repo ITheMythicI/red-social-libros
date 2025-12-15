@@ -1,28 +1,77 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 import Navbar from "../components/Navbar";
 import { getPosts, toggleLike, toggleDislike, createComment } from "../api/posts";
+import { getBookSuggestions, getAuthorBiography, getCuriousFacts } from "../api/books";
 
 const Home = () => {
+  const { user } = useSelector((state) => state.auth);
   const [posts, setPosts] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [curiousFacts, setCuriousFacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState({});
+  const [feedItems, setFeedItems] = useState([]);
+  const [expandedAuthors, setExpandedAuthors] = useState(new Set());
 
   useEffect(() => {
-    const loadPosts = async () => {
+    const loadFeed = async () => {
       try {
         setLoading(true);
-        const data = await getPosts();
-        setPosts(data);
+        
+        // Cargar todos los datos en paralelo
+        const [postsData, suggestionsData, factsData] = await Promise.all([
+          getPosts().catch(() => []),
+          getBookSuggestions().catch(() => ({ sugerencias: [] })),
+          getCuriousFacts().catch(() => ({ datosCuriosos: [] }))
+        ]);
+
+        setPosts(postsData);
+        setSuggestions(suggestionsData.sugerencias || []);
+        setCuriousFacts(factsData.datosCuriosos || []);
       } catch (err) {
-        console.error("Error loading posts:", err);
-        toast.error("No se pudieron cargar los posts");
+        console.error("Error loading feed:", err);
+        toast.error("No se pudieron cargar algunos contenidos");
       } finally {
         setLoading(false);
       }
     };
-    loadPosts();
+    loadFeed();
   }, []);
+
+  // Mezclar y ordenar el feed
+  useEffect(() => {
+    const items = [];
+    
+    // Agregar posts
+    posts.forEach(post => {
+      items.push({ type: 'post', data: post, timestamp: new Date(post.createdAt) });
+    });
+
+    // Agregar sugerencias de libros
+    suggestions.forEach((book, index) => {
+      items.push({ 
+        type: 'suggestion', 
+        data: book, 
+        timestamp: new Date(Date.now() - index * 60000) // Espaciados por minuto
+      });
+    });
+
+    // Agregar datos curiosos
+    curiousFacts.forEach((fact, index) => {
+      items.push({ 
+        type: 'curious-fact', 
+        data: fact, 
+        timestamp: new Date(Date.now() - (index + 10) * 60000)
+      });
+    });
+
+    // Ordenar por timestamp (más reciente primero)
+    items.sort((a, b) => b.timestamp - a.timestamp);
+    
+    setFeedItems(items);
+  }, [posts, suggestions, curiousFacts]);
 
   const handleToggleLike = async (postId) => {
     try {
@@ -55,6 +104,178 @@ const Home = () => {
     }
   };
 
+  const handleLoadAuthorBio = async (authorName) => {
+    if (expandedAuthors.has(authorName)) {
+      setExpandedAuthors(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(authorName);
+        return newSet;
+      });
+      return;
+    }
+
+    try {
+      const bio = await getAuthorBiography(authorName);
+      // Guardar la biografía en el estado de la sugerencia
+      setSuggestions(prev => prev.map(book => {
+        if (book.autores?.includes(authorName)) {
+          return { ...book, biografia: bio };
+        }
+        return book;
+      }));
+      setExpandedAuthors(prev => new Set(prev).add(authorName));
+    } catch (err) {
+      toast.error("No se pudo cargar la biografía");
+    }
+  };
+
+  const renderPost = (post) => (
+    <div key={post._id} className="feed-item post-card">
+      <div className="post-header">
+        <div className="post-author">
+          {post.autor?.avatarUrl ? (
+            <img src={post.autor.avatarUrl} alt={post.autor.nombre} className="post-avatar" />
+          ) : (
+            <div className="post-avatar">{(post.autor?.nombre || "U").slice(0, 2).toUpperCase()}</div>
+          )}
+          <div>
+            <strong>{post.autor?.nombre || "Usuario"}</strong>
+            <p className="muted" style={{ fontSize: '0.85rem', margin: 0 }}>
+              {new Date(post.createdAt).toLocaleDateString('es-ES', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          </div>
+        </div>
+      </div>
+      <p className="post-text">{post.texto}</p>
+      {post.libro && (
+        <div className="post-book">
+          {post.libro.portada && <img src={post.libro.portada} alt={post.libro.titulo} />}
+          <div>
+            <strong>{post.libro.titulo}</strong>
+            <p className="muted">{(post.libro.autores || []).join(", ")}</p>
+          </div>
+        </div>
+      )}
+      <div className="post-actions">
+        <button onClick={() => handleToggleLike(post._id)} className="action-btn">
+          👍 {post.likes?.length || 0}
+        </button>
+        <button onClick={() => handleToggleDislike(post._id)} className="action-btn">
+          👎 {post.dislikes?.length || 0}
+        </button>
+        <span className="muted">💬 {post.comentarios?.length || 0}</span>
+      </div>
+      {post.comentarios && post.comentarios.length > 0 && (
+        <div className="comments-list">
+          {post.comentarios.map((comment) => (
+            <div key={comment._id} className="comment">
+              <strong>{comment.autor?.nombre || "Usuario"}</strong>
+              <p>{comment.texto}</p>
+              <div className="comment-actions">
+                <span className="muted">👍 {comment.likes?.length || 0}</span>
+                <span className="muted">👎 {comment.dislikes?.length || 0}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="comment-form">
+        <input
+          className="input"
+          placeholder="Escribe un comentario..."
+          value={commentText[post._id] || ""}
+          onChange={(e) => setCommentText({ ...commentText, [post._id]: e.target.value })}
+          onKeyPress={(e) => {
+            if (e.key === "Enter") {
+              handleAddComment(post._id);
+            }
+          }}
+        />
+        <button className="btn-secondary" onClick={() => handleAddComment(post._id)}>
+          Comentar
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderSuggestion = (book) => (
+    <div key={`suggestion-${book.bookId}`} className="feed-item suggestion-card">
+      <div className="suggestion-header">
+        <span className="suggestion-badge">📚 Recomendación para ti</span>
+      </div>
+      <div className="suggestion-content">
+        <div className="suggestion-book">
+          {book.portada ? (
+            <img src={book.portada} alt={book.titulo} className="suggestion-cover" />
+          ) : (
+            <div className="suggestion-cover placeholder">📖</div>
+          )}
+          <div className="suggestion-info">
+            <h3>{book.titulo}</h3>
+            <p className="muted">{(book.autores || []).join(", ")}</p>
+            {book.descripcion && (
+              <p className="suggestion-synopsis">
+                {book.descripcion.length > 200 
+                  ? `${book.descripcion.substring(0, 200)}...` 
+                  : book.descripcion}
+              </p>
+            )}
+            {book.autores && book.autores.length > 0 && (
+              <div className="author-bio-section">
+                {book.autores.map((author, idx) => {
+                  const isExpanded = expandedAuthors.has(author);
+                  const bio = book.biografia;
+                  return (
+                    <div key={idx} className="author-bio">
+                      <button 
+                        className="author-bio-btn"
+                        onClick={() => handleLoadAuthorBio(author)}
+                      >
+                        {isExpanded ? '▼' : '▶'} Conocer más sobre {author}
+                      </button>
+                      {isExpanded && bio && (
+                        <div className="author-bio-content">
+                          <p><strong>{bio.nombre}</strong></p>
+                          <p>{bio.descripcion}</p>
+                          {bio.categorias && bio.categorias.length > 0 && (
+                            <div className="bio-categories">
+                              {bio.categorias.slice(0, 3).map((cat, i) => (
+                                <span key={i} className="bio-tag">{cat}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCuriousFact = (fact) => (
+    <div key={`fact-${fact.titulo}`} className="feed-item curious-fact-card">
+      <div className="curious-fact-header">
+        <span className="curious-fact-icon">{fact.imagen}</span>
+        <span className="curious-fact-badge">💡 Dato Curioso</span>
+      </div>
+      <div className="curious-fact-content">
+        <h3>{fact.titulo}</h3>
+        <p>{fact.contenido}</p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="page">
       <div className="surface-card surface-wide">
@@ -69,82 +290,26 @@ const Home = () => {
         </h1>
 
         {loading ? (
-          <p className="muted">Cargando posts...</p>
-        ) : posts.length === 0 ? (
+          <p className="muted">Cargando contenido...</p>
+        ) : feedItems.length === 0 ? (
           <div>
-            <p className="muted">No hay posts todavía. ¡Sé el primero en crear uno!</p>
+            <p className="muted">No hay contenido todavía. ¡Sé el primero en crear un post!</p>
             <a className="switch-link" href="/perfil">Ir a mi perfil</a>
           </div>
         ) : (
-          <div className="posts-list">
-            {posts.map((post) => (
-              <div key={post._id} className="post-card">
-                <div className="post-header">
-                  <div className="post-author">
-                    {post.autor?.avatarUrl ? (
-                      <img src={post.autor.avatarUrl} alt={post.autor.nombre} className="post-avatar" />
-                    ) : (
-                      <div className="post-avatar">{(post.autor?.nombre || "U").slice(0, 2).toUpperCase()}</div>
-                    )}
-                    <div>
-                      <strong>{post.autor?.nombre || "Usuario"}</strong>
-                      <p className="muted" style={{ fontSize: '0.85rem', margin: 0 }}>
-                        {new Date(post.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <p className="post-text">{post.texto}</p>
-                {post.libro && (
-                  <div className="post-book">
-                    {post.libro.portada && <img src={post.libro.portada} alt={post.libro.titulo} />}
-                    <div>
-                      <strong>{post.libro.titulo}</strong>
-                      <p className="muted">{(post.libro.autores || []).join(", ")}</p>
-                    </div>
-                  </div>
-                )}
-                <div className="post-actions">
-                  <button onClick={() => handleToggleLike(post._id)} className="action-btn">
-                    👍 {post.likes?.length || 0}
-                  </button>
-                  <button onClick={() => handleToggleDislike(post._id)} className="action-btn">
-                    👎 {post.dislikes?.length || 0}
-                  </button>
-                  <span className="muted">💬 {post.comentarios?.length || 0}</span>
-                </div>
-                {post.comentarios && post.comentarios.length > 0 && (
-                  <div className="comments-list">
-                    {post.comentarios.map((comment) => (
-                      <div key={comment._id} className="comment">
-                        <strong>{comment.autor?.nombre || "Usuario"}</strong>
-                        <p>{comment.texto}</p>
-                        <div className="comment-actions">
-                          <span className="muted">👍 {comment.likes?.length || 0}</span>
-                          <span className="muted">👎 {comment.dislikes?.length || 0}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="comment-form">
-                  <input
-                    className="input"
-                    placeholder="Escribe un comentario..."
-                    value={commentText[post._id] || ""}
-                    onChange={(e) => setCommentText({ ...commentText, [post._id]: e.target.value })}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        handleAddComment(post._id);
-                      }
-                    }}
-                  />
-                  <button className="btn-secondary" onClick={() => handleAddComment(post._id)}>
-                    Comentar
-                  </button>
-                </div>
-              </div>
-            ))}
+          <div className="feed-container">
+            {feedItems.map((item, index) => {
+              switch (item.type) {
+                case 'post':
+                  return renderPost(item.data);
+                case 'suggestion':
+                  return renderSuggestion(item.data);
+                case 'curious-fact':
+                  return renderCuriousFact(item.data);
+                default:
+                  return null;
+              }
+            })}
           </div>
         )}
       </div>
