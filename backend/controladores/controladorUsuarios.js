@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const usuario = require('../modelos/modeloUsuarios');
+const { crearNotificacion } = require('./controladorNotificaciones');
 
 const registroUsuario = asyncHandler(async (req, res) => {
     const { 
@@ -321,6 +322,14 @@ const seguirUsuario = asyncHandler(async (req, res) => {
         }
         usuarioActual.siguiendo.push(usuarioId);
         usuarioASeguir.seguidores.push(usuarioActual._id.toString());
+        
+        // Crear notificación
+        await crearNotificacion(
+            usuarioId,
+            usuarioActual._id,
+            'seguidor',
+            `${usuarioActual.nombre} comenzó a seguirte`
+        );
     }
 
     await usuarioActual.save();

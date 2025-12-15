@@ -1,4 +1,5 @@
 import api from "./axios";
+import { refreshNotifications } from "../components/NotificationBell";
 
 export const createPost = async (data) => {
   const res = await api.post("/posts", data);
@@ -22,6 +23,8 @@ export const getPost = async (id) => {
 
 export const toggleLike = async (postId) => {
   const res = await api.put(`/posts/${postId}/like`);
+  //Refrescar notificaciones cuando se da like
+  refreshNotifications();
   return res.data;
 };
 
@@ -32,6 +35,8 @@ export const toggleDislike = async (postId) => {
 
 export const createComment = async (postId, texto) => {
   const res = await api.post(`/posts/${postId}/comentarios`, { texto });
+  // Refrescar notificaciones cuando se crea un comentario
+  refreshNotifications();
   return res.data;
 };
 
