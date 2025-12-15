@@ -4,6 +4,7 @@ import {
   fetchMe,
   updateAvatar,
   updateName,
+  updateSubjects,
   updateFavoritos,
   updateLeyendo,
   updateLeidos,
@@ -23,6 +24,10 @@ const Profile = () => {
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [targetList, setTargetList] = useState("favoritos"); // favoritos | leyendo | leidos
   const [showModal, setShowModal] = useState(false);
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [showSubjectsModal, setShowSubjectsModal] = useState(false);
+  const [tempSubjects, setTempSubjects] = useState(subjects);
+  const [tempName, setTempName] = useState(nameInput);
   const seguidoresCount = user?.seguidoresCount ?? user?.seguidores?.length ?? 0;
   const siguiendoCount = user?.siguiendoCount ?? user?.siguiendo?.length ?? 0;
 
@@ -50,11 +55,13 @@ const Profile = () => {
   };
 
   const handleNameSave = (e) => {
-    e.preventDefault();
-    dispatch(updateName(nameInput))
+    e?.preventDefault();
+    dispatch(updateName(tempName))
       .unwrap()
       .then(() => toast.success("Nombre actualizado"))
       .catch((err) => toast.error(err));
+    setNameInput(tempName);
+    setShowNameModal(false);
   };
 
   const handleSearch = async (e) => {
@@ -79,6 +86,30 @@ const Profile = () => {
   };
 
   const closeModal = () => setShowModal(false);
+  const closeNameModal = () => setShowNameModal(false);
+  const openNameModal = () => {
+    setTempName(nameInput);
+    setShowNameModal(true);
+  };
+
+  const openSubjectsModal = () => {
+    setTempSubjects(subjects);
+    setShowSubjectsModal(true);
+  };
+
+  const toggleSubject = (s) => {
+    setTempSubjects((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+    );
+  };
+
+  const handleSubjectsSave = () => {
+    dispatch(updateSubjects(tempSubjects))
+      .unwrap()
+      .then(() => toast.success("Géneros actualizados"))
+      .catch((err) => toast.error(err));
+    setShowSubjectsModal(false);
+  };
 
   const syncList = (listName, data) => {
     switch (listName) {
@@ -134,20 +165,10 @@ const Profile = () => {
             />
           </div>
           <div className="profile-main">
-            <form className="name-form" onSubmit={handleNameSave}>
-              <input
-                className="input"
-                value={nameInput}
-                onChange={(e) => setNameInput(e.target.value)}
-                placeholder="Tu nombre"
-              />
-              <button className="btn-secondary" type="submit">
-                Guardar nombre
-              </button>
-            </form>
-            <div className="actions-row">
-              <button className="btn-primary" type="button">
-                Crear post
+            <div className="name-row">
+              <h2 className="name-display">{nameInput}</h2>
+              <button className="icon-button" type="button" onClick={openNameModal} title="Editar nombre">
+                ✏️
               </button>
             </div>
             <div className="counts-row">
@@ -159,6 +180,11 @@ const Profile = () => {
                 <strong>{siguiendoCount}</strong>
                 <span>Siguiendo</span>
               </div>
+              <div className="actions-row">
+                <button className="btn-primary" type="button">
+                  Crear post
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -166,6 +192,9 @@ const Profile = () => {
         <section>
           <div className="section-title">
             <h3>Géneros favoritos</h3>
+            <button className="icon-button" type="button" onClick={openSubjectsModal} title="Editar géneros">
+              ✏️
+            </button>
           </div>
           {subjects.length === 0 ? (
             <p className="muted">Aún no configuras tus géneros favoritos.</p>
@@ -301,6 +330,58 @@ const Profile = () => {
                 </div>
               ))}
               {results.length === 0 && <p className="muted">Busca un título para agregar.</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showNameModal && (
+        <div className="modal-backdrop" onClick={closeNameModal}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Editar nombre</h3>
+              <button className="icon-button" onClick={closeNameModal}>✕</button>
+            </div>
+            <form className="form" onSubmit={handleNameSave}>
+              <input
+                className="input"
+                value={tempName}
+                onChange={(e) => setTempName(e.target.value)}
+                placeholder="Tu nombre"
+                required
+              />
+              <button className="btn-primary" type="submit">Guardar</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showSubjectsModal && (
+        <div className="modal-backdrop" onClick={() => setShowSubjectsModal(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Editar géneros favoritos</h3>
+              <button className="icon-button" onClick={() => setShowSubjectsModal(false)}>✕</button>
+            </div>
+            <div className="chips-grid">
+              {[
+                "Ficción","No ficción","Ciencia","Tecnología","Historia","Biografías",
+                "Negocios","Autoayuda","Fantasía","Ciencia ficción","Misterio","Romance",
+                "Educación","Arte","Viajes"
+              ].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`chip ${tempSubjects.includes(s) ? "chip-selected" : ""}`}
+                  onClick={() => toggleSubject(s)}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <div className="actions-row modal-actions">
+              <button className="btn-secondary" type="button" onClick={() => setShowSubjectsModal(false)}>Cancelar</button>
+              <button className="btn-primary" type="button" onClick={handleSubjectsSave}>Guardar</button>
             </div>
           </div>
         </div>
