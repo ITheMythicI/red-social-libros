@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   fetchMe,
   updateAvatar,
@@ -11,7 +12,7 @@ import {
 } from "../features/auth/authSlice";
 import { toast } from "react-toastify";
 import { searchBooks } from "../api/books";
-import { createPost, getUserPosts, toggleLike, toggleDislike, createComment } from "../api/posts";
+import { createPost, getUserPosts, toggleLike, toggleDislike, createComment, toggleLikeComment, toggleDislikeComment } from "../api/posts";
 import Navbar from "../components/Navbar";
 
 const SUBJECTS_OPTIONS = [
@@ -34,6 +35,7 @@ const SUBJECTS_OPTIONS = [
 
 const Profile = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const [nameInput, setNameInput] = useState(user?.nombre || "");
   const [favoritos, setFavoritos] = useState(user?.librosFavoritos || []);
@@ -187,6 +189,24 @@ const Profile = () => {
       setCommentText({ ...commentText, [postId]: "" });
     } catch (err) {
       toast.error("Error al comentar");
+    }
+  };
+
+  const handleToggleCommentLike = async (postId, comentarioId) => {
+    try {
+      const updated = await toggleLikeComment(postId, comentarioId);
+      setUserPosts(userPosts.map((p) => (p._id === postId ? updated : p)));
+    } catch (err) {
+      toast.error("Error al dar like al comentario");
+    }
+  };
+
+  const handleToggleCommentDislike = async (postId, comentarioId) => {
+    try {
+      const updated = await toggleDislikeComment(postId, comentarioId);
+      setUserPosts(userPosts.map((p) => (p._id === postId ? updated : p)));
+    } catch (err) {
+      toast.error("Error al dar dislike al comentario");
     }
   };
 
@@ -414,14 +434,24 @@ const Profile = () => {
               {userPosts.map((post) => (
                 <div key={post._id} className="post-card">
                   <div className="post-header">
-                    <div className="post-author">
+                    <div 
+                      className="post-author"
+                      style={{ cursor: post.autor?._id !== user?._id ? 'pointer' : 'default' }}
+                      onClick={() => {
+                        if (post.autor?._id && post.autor._id !== user?._id) {
+                          navigate(`/usuario/${post.autor._id}`);
+                        }
+                      }}
+                    >
                       {post.autor?.avatarUrl ? (
                         <img src={post.autor.avatarUrl} alt={post.autor.nombre} className="post-avatar" />
                       ) : (
                         <div className="post-avatar">{(post.autor?.nombre || "U").slice(0, 2).toUpperCase()}</div>
                       )}
                       <div>
-                        <strong>{post.autor?.nombre || "Usuario"}</strong>
+                        <strong style={post.autor?._id !== user?._id ? { textDecoration: 'underline' } : {}}>
+                          {post.autor?.nombre || "Usuario"}
+                        </strong>
                         <p className="muted" style={{ fontSize: '0.85rem', margin: 0 }}>
                           {new Date(post.createdAt).toLocaleDateString()}
                         </p>
@@ -451,11 +481,34 @@ const Profile = () => {
                     <div className="comments-list">
                       {post.comentarios.map((comment) => (
                         <div key={comment._id} className="comment">
-                          <strong>{comment.autor?.nombre || "Usuario"}</strong>
+                          <div 
+                            style={{ cursor: comment.autor?._id !== user?._id ? 'pointer' : 'default', display: 'inline-block' }}
+                            onClick={() => {
+                              if (comment.autor?._id && comment.autor._id !== user?._id) {
+                                navigate(`/usuario/${comment.autor._id}`);
+                              }
+                            }}
+                          >
+                            <strong style={comment.autor?._id !== user?._id ? { textDecoration: 'underline' } : {}}>
+                              {comment.autor?.nombre || "Usuario"}
+                            </strong>
+                          </div>
                           <p>{comment.texto}</p>
                           <div className="comment-actions">
-                            <span className="muted">👍 {comment.likes?.length || 0}</span>
-                            <span className="muted">👎 {comment.dislikes?.length || 0}</span>
+                            <button 
+                              onClick={() => handleToggleCommentLike(post._id, comment._id)} 
+                              className="action-btn"
+                              style={{ padding: '4px 8px', fontSize: '0.9rem' }}
+                            >
+                              👍 {comment.likes?.length || 0}
+                            </button>
+                            <button 
+                              onClick={() => handleToggleCommentDislike(post._id, comment._id)} 
+                              className="action-btn"
+                              style={{ padding: '4px 8px', fontSize: '0.9rem' }}
+                            >
+                              👎 {comment.dislikes?.length || 0}
+                            </button>
                           </div>
                         </div>
                       ))}

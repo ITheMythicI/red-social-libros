@@ -25,21 +25,36 @@ const obtenerPosts = asyncHandler(async (req, res) => {
     const Usuario = require('../modelos/modeloUsuarios');
     const usuarioActual = await Usuario.findById(req.usuario._id);
     
+    // Obtener lista de usuarios bloqueados (tanto los que bloqueé como los que me bloquearon)
+    const usuariosBloqueados = usuarioActual.usuariosBloqueados || [];
+    // También excluir usuarios que me han bloqueado
+    const usuariosQueMeBloquearon = await Usuario.find({ 
+        usuariosBloqueados: req.usuario._id.toString() 
+    }).select('_id');
+    const idsUsuariosQueMeBloquearon = usuariosQueMeBloquearon.map(u => u._id.toString());
+    const todosLosBloqueados = [...usuariosBloqueados, ...idsUsuariosQueMeBloquearon];
+    
     let posts = [];
 
-    // 1. Intentar posts de usuarios que sigue
+    // 1. Intentar posts de usuarios que sigue (excluyendo bloqueados)
     if (usuarioActual.siguiendo && usuarioActual.siguiendo.length > 0) {
-        posts = await Post.find({ autor: { $in: usuarioActual.siguiendo } })
-            .populate('autor', 'nombre avatarUrl')
-            .populate('comentarios.autor', 'nombre avatarUrl')
-            .sort({ createdAt: -1 })
-            .limit(50);
+        const siguiendoFiltrado = usuarioActual.siguiendo.filter(id => !todosLosBloqueados.includes(id.toString()));
+        if (siguiendoFiltrado.length > 0) {
+            posts = await Post.find({ autor: { $in: siguiendoFiltrado } })
+                .populate('autor', 'nombre avatarUrl')
+                .populate('comentarios.autor', 'nombre avatarUrl')
+                .sort({ createdAt: -1 })
+                .limit(50);
+        }
     }
 
-    // 2. Si no hay suficientes, agregar posts random (excluyendo los propios)
+    // 2. Si no hay suficientes, agregar posts random (excluyendo los propios y bloqueados)
     if (posts.length < 10) {
         const randomPosts = await Post.find({ 
-            autor: { $ne: req.usuario._id },
+            autor: { 
+                $ne: req.usuario._id,
+                $nin: todosLosBloqueados.map(id => id.toString())
+            },
             _id: { $nin: posts.map(p => p._id) }
         })
             .populate('autor', 'nombre avatarUrl')
@@ -61,6 +76,12 @@ const obtenerPosts = asyncHandler(async (req, res) => {
         posts = [...posts, ...ownPosts];
     }
 
+    // Filtrar posts de usuarios bloqueados (por si acaso)
+    posts = posts.filter(post => {
+        const autorId = post.autor._id.toString();
+        return !todosLosBloqueados.includes(autorId);
+    });
+
     // Eliminar duplicados y ordenar por fecha
     const uniquePosts = Array.from(new Map(posts.map(p => [p._id.toString(), p])).values());
     uniquePosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -70,7 +91,23 @@ const obtenerPosts = asyncHandler(async (req, res) => {
 
 // GET /api/posts/usuario/:userId - Obtener posts de un usuario
 const obtenerPostsUsuario = asyncHandler(async (req, res) => {
-    const posts = await Post.find({ autor: req.params.userId })
+    const Usuario = require('../modelos/modeloUsuarios');
+    const usuarioActual = await Usuario.findById(req.usuario._id);
+    const usuarioBuscadoId = req.params.userId;
+
+    // Verificar si está bloqueado
+    const estaBloqueado = usuarioActual.usuariosBloqueados && usuarioActual.usuariosBloqueados.includes(usuarioBuscadoId);
+    const meBloquearon = await Usuario.findOne({ 
+        _id: usuarioBuscadoId,
+        usuariosBloqueados: req.usuario._id.toString()
+    });
+
+    if (estaBloqueado || meBloquearon) {
+        res.status(403);
+        throw new Error('No tienes acceso a estos posts');
+    }
+
+    const posts = await Post.find({ autor: usuarioBuscadoId })
         .populate('autor', 'nombre avatarUrl')
         .populate('comentarios.autor', 'nombre avatarUrl')
         .sort({ createdAt: -1 });

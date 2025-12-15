@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { register, reset } from "../features/auth/authSlice";
 import { toast } from "react-toastify";
+import librumLogo from "../assets/librum-logo.png";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -55,10 +56,8 @@ const Register = () => {
     <div className="page">
       <div className="surface-card">
         <div className="brand">
-          <span role="img" aria-label="book">
-            📚
-          </span>
-          Crea tu cuenta
+          <img src={librumLogo} alt="Librum" style={{ height: "32px", width: "auto" }} />
+          <span>Librum</span>
         </div>
         <p className="subtitle">Únete a la red y comparte tus lecturas.</p>
 
