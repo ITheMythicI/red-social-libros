@@ -151,11 +151,10 @@ const limpiarLibros = (libros = []) =>
         }))
         .filter((libro) => libro.bookId && libro.titulo);
 
-const responderUsuario = (usuarioDoc, res) => {
-    res.json({
+const responderUsuario = (usuarioDoc, res, incluirEmail = false) => {
+    const respuesta = {
         _id: usuarioDoc.id,
         nombre: usuarioDoc.nombre,
-        email: usuarioDoc.email,
         subjectsFavoritos: usuarioDoc.subjectsFavoritos,
         librosFavoritos: usuarioDoc.librosFavoritos,
         librosLeyendo: usuarioDoc.librosLeyendo,
@@ -165,7 +164,11 @@ const responderUsuario = (usuarioDoc, res) => {
         siguiendo: usuarioDoc.siguiendo,
         seguidoresCount: usuarioDoc.seguidores.length,
         siguiendoCount: usuarioDoc.siguiendo.length,
-    });
+    };
+    if (incluirEmail) {
+        respuesta.email = usuarioDoc.email;
+    }
+    res.json(respuesta);
 };
 
 // PUT /api/usuarios/favoritos
@@ -234,6 +237,150 @@ const actualizarNombre = asyncHandler(async (req, res) => {
     responderUsuario(req.usuario, res);
 });
 
+// GET /api/usuarios/:userId - Obtener perfil de otro usuario
+const obtenerUsuarioPorId = asyncHandler(async (req, res) => {
+    const usuarioBuscado = await usuario.findById(req.params.userId);
+    
+    if (!usuarioBuscado) {
+        res.status(404);
+        throw new Error('Usuario no encontrado');
+    }
+
+    // Verificar si el usuario actual está bloqueado por el usuario buscado
+    const usuarioActual = req.usuario;
+    if (usuarioBuscado.usuariosBloqueados && usuarioBuscado.usuariosBloqueados.includes(usuarioActual._id.toString())) {
+        res.status(403);
+        throw new Error('No tienes acceso a este perfil');
+    }
+
+    // Verificar si el usuario buscado está bloqueado por el usuario actual
+    const estaBloqueado = usuarioActual.usuariosBloqueados && usuarioActual.usuariosBloqueados.includes(usuarioBuscado._id.toString());
+    
+    // Verificar si el usuario actual sigue al usuario buscado
+    const estaSiguiendo = usuarioActual.siguiendo && usuarioActual.siguiendo.includes(usuarioBuscado._id.toString());
+
+    const respuesta = {
+        _id: usuarioBuscado.id,
+        nombre: usuarioBuscado.nombre,
+        subjectsFavoritos: usuarioBuscado.subjectsFavoritos,
+        librosFavoritos: usuarioBuscado.librosFavoritos,
+        librosLeyendo: usuarioBuscado.librosLeyendo,
+        librosLeidos: usuarioBuscado.librosLeidos,
+        avatarUrl: usuarioBuscado.avatarUrl,
+        seguidores: usuarioBuscado.seguidores,
+        siguiendo: usuarioBuscado.siguiendo,
+        seguidoresCount: usuarioBuscado.seguidores.length,
+        siguiendoCount: usuarioBuscado.siguiendo.length,
+        estaSiguiendo: estaSiguiendo,
+        estaBloqueado: estaBloqueado,
+    };
+
+    res.json(respuesta);
+});
+
+// PUT /api/usuarios/:userId/seguir - Seguir/dejar de seguir usuario
+const seguirUsuario = asyncHandler(async (req, res) => {
+    const usuarioActual = req.usuario;
+    const usuarioId = req.params.userId;
+
+    if (usuarioActual._id.toString() === usuarioId) {
+        res.status(400);
+        throw new Error('No puedes seguirte a ti mismo');
+    }
+
+    const usuarioASeguir = await usuario.findById(usuarioId);
+    if (!usuarioASeguir) {
+        res.status(404);
+        throw new Error('Usuario no encontrado');
+    }
+
+    // Verificar si está bloqueado
+    if (usuarioActual.usuariosBloqueados && usuarioActual.usuariosBloqueados.includes(usuarioId)) {
+        res.status(403);
+        throw new Error('No puedes seguir a un usuario bloqueado');
+    }
+
+    if (usuarioASeguir.usuariosBloqueados && usuarioASeguir.usuariosBloqueados.includes(usuarioActual._id.toString())) {
+        res.status(403);
+        throw new Error('Este usuario te ha bloqueado');
+    }
+
+    const estaSiguiendo = usuarioActual.siguiendo && usuarioActual.siguiendo.includes(usuarioId);
+
+    if (estaSiguiendo) {
+        // Dejar de seguir
+        usuarioActual.siguiendo = usuarioActual.siguiendo.filter(id => id.toString() !== usuarioId);
+        usuarioASeguir.seguidores = usuarioASeguir.seguidores.filter(id => id.toString() !== usuarioActual._id.toString());
+    } else {
+        // Seguir
+        if (!usuarioActual.siguiendo) {
+            usuarioActual.siguiendo = [];
+        }
+        if (!usuarioASeguir.seguidores) {
+            usuarioASeguir.seguidores = [];
+        }
+        usuarioActual.siguiendo.push(usuarioId);
+        usuarioASeguir.seguidores.push(usuarioActual._id.toString());
+    }
+
+    await usuarioActual.save();
+    await usuarioASeguir.save();
+
+    res.json({
+        estaSiguiendo: !estaSiguiendo,
+        mensaje: estaSiguiendo ? 'Dejaste de seguir al usuario' : 'Ahora sigues al usuario'
+    });
+});
+
+// PUT /api/usuarios/:userId/bloquear - Bloquear/desbloquear usuario
+const bloquearUsuario = asyncHandler(async (req, res) => {
+    const usuarioActual = req.usuario;
+    const usuarioId = req.params.userId;
+
+    if (usuarioActual._id.toString() === usuarioId) {
+        res.status(400);
+        throw new Error('No puedes bloquearte a ti mismo');
+    }
+
+    const usuarioABloquear = await usuario.findById(usuarioId);
+    if (!usuarioABloquear) {
+        res.status(404);
+        throw new Error('Usuario no encontrado');
+    }
+
+    const estaBloqueado = usuarioActual.usuariosBloqueados && usuarioActual.usuariosBloqueados.includes(usuarioId);
+
+    if (estaBloqueado) {
+        // Desbloquear
+        usuarioActual.usuariosBloqueados = usuarioActual.usuariosBloqueados.filter(id => id.toString() !== usuarioId);
+        // También dejar de seguir si estaba siguiendo
+        if (usuarioActual.siguiendo && usuarioActual.siguiendo.includes(usuarioId)) {
+            usuarioActual.siguiendo = usuarioActual.siguiendo.filter(id => id.toString() !== usuarioId);
+            usuarioABloquear.seguidores = usuarioABloquear.seguidores.filter(id => id.toString() !== usuarioActual._id.toString());
+            await usuarioABloquear.save();
+        }
+    } else {
+        // Bloquear
+        if (!usuarioActual.usuariosBloqueados) {
+            usuarioActual.usuariosBloqueados = [];
+        }
+        usuarioActual.usuariosBloqueados.push(usuarioId);
+        // Dejar de seguir si estaba siguiendo
+        if (usuarioActual.siguiendo && usuarioActual.siguiendo.includes(usuarioId)) {
+            usuarioActual.siguiendo = usuarioActual.siguiendo.filter(id => id.toString() !== usuarioId);
+            usuarioABloquear.seguidores = usuarioABloquear.seguidores.filter(id => id.toString() !== usuarioActual._id.toString());
+            await usuarioABloquear.save();
+        }
+    }
+
+    await usuarioActual.save();
+
+    res.json({
+        estaBloqueado: !estaBloqueado,
+        mensaje: estaBloqueado ? 'Usuario desbloqueado' : 'Usuario bloqueado'
+    });
+});
+
 const generarTokenJWT = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '30d'
@@ -245,11 +392,14 @@ module.exports = {
     registroUsuario, 
     loginUsuario, 
     obtenerUsuarioActual,
+    obtenerUsuarioPorId,
     actualizarSubjectsFavoritos,
     actualizarLibrosFavoritos,
     actualizarLibrosLeyendo,
     actualizarLibrosLeidos,
     actualizarAvatar,
-    actualizarNombre, 
+    actualizarNombre,
+    seguirUsuario,
+    bloquearUsuario,
 };
 

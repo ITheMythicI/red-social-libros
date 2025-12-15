@@ -65,6 +65,10 @@ const esquemaUsuario = mongoose.Schema(
             type: [String],
             default: [],
         },
+        usuariosBloqueados: {
+            type: [String],
+            default: [],
+        },
     },
     { timestamps: true }
 );

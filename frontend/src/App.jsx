@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
+import UserProfile from "./pages/UserProfile";
 
 function App() {
   const { token, user } = useSelector((state) => state.auth);
@@ -69,6 +70,14 @@ function App() {
           element={
             <Protected>
               <Onboarding />
+            </Protected>
+          }
+        />
+        <Route
+          path="/usuario/:userId"
+          element={
+            <Protected>
+              <UserProfile />
             </Protected>
           }
         />

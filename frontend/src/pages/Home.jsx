@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { getPosts, toggleLike, toggleDislike, createComment } from "../api/posts";
+import { getPosts, toggleLike, toggleDislike, createComment, toggleLikeComment, toggleDislikeComment } from "../api/posts";
 import { getBookSuggestions, getAuthorBiography, getCuriousFacts } from "../api/books";
+import librumLogo from "../assets/librum-logo.png";
 
 const Home = () => {
   const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [curiousFacts, setCuriousFacts] = useState([]);
@@ -58,14 +61,15 @@ const Home = () => {
       });
     });
 
-    // Agregar datos curiosos
-    curiousFacts.forEach((fact, index) => {
+    // Agregar solo un dato curioso al azar
+    if (curiousFacts.length > 0) {
+      const randomFact = curiousFacts[Math.floor(Math.random() * curiousFacts.length)];
       items.push({ 
         type: 'curious-fact', 
-        data: fact, 
-        timestamp: new Date(Date.now() - (index + 10) * 60000)
+        data: randomFact, 
+        timestamp: new Date(Date.now() - 10 * 60000)
       });
-    });
+    }
 
     // Ordenar por timestamp (más reciente primero)
     items.sort((a, b) => b.timestamp - a.timestamp);
@@ -104,6 +108,24 @@ const Home = () => {
     }
   };
 
+  const handleToggleCommentLike = async (postId, comentarioId) => {
+    try {
+      const updated = await toggleLikeComment(postId, comentarioId);
+      setPosts(posts.map((p) => (p._id === postId ? updated : p)));
+    } catch (err) {
+      toast.error("Error al dar like al comentario");
+    }
+  };
+
+  const handleToggleCommentDislike = async (postId, comentarioId) => {
+    try {
+      const updated = await toggleDislikeComment(postId, comentarioId);
+      setPosts(posts.map((p) => (p._id === postId ? updated : p)));
+    } catch (err) {
+      toast.error("Error al dar dislike al comentario");
+    }
+  };
+
   const handleLoadAuthorBio = async (authorName) => {
     if (expandedAuthors.has(authorName)) {
       setExpandedAuthors(prev => {
@@ -129,17 +151,29 @@ const Home = () => {
     }
   };
 
+  const handleUserClick = (userId) => {
+    if (userId && userId !== user?._id) {
+      navigate(`/usuario/${userId}`);
+    } else if (userId === user?._id) {
+      navigate("/perfil");
+    }
+  };
+
   const renderPost = (post) => (
     <div key={post._id} className="feed-item post-card">
       <div className="post-header">
-        <div className="post-author">
+        <div 
+          className="post-author"
+          style={{ cursor: 'pointer' }}
+          onClick={() => handleUserClick(post.autor?._id)}
+        >
           {post.autor?.avatarUrl ? (
             <img src={post.autor.avatarUrl} alt={post.autor.nombre} className="post-avatar" />
           ) : (
             <div className="post-avatar">{(post.autor?.nombre || "U").slice(0, 2).toUpperCase()}</div>
           )}
           <div>
-            <strong>{post.autor?.nombre || "Usuario"}</strong>
+            <strong style={{ textDecoration: 'underline' }}>{post.autor?.nombre || "Usuario"}</strong>
             <p className="muted" style={{ fontSize: '0.85rem', margin: 0 }}>
               {new Date(post.createdAt).toLocaleDateString('es-ES', { 
                 day: 'numeric', 
@@ -175,11 +209,30 @@ const Home = () => {
         <div className="comments-list">
           {post.comentarios.map((comment) => (
             <div key={comment._id} className="comment">
-              <strong>{comment.autor?.nombre || "Usuario"}</strong>
+              <div 
+                style={{ cursor: 'pointer', display: 'inline-block' }}
+                onClick={() => handleUserClick(comment.autor?._id)}
+              >
+                <strong style={{ textDecoration: 'underline' }}>
+                  {comment.autor?.nombre || "Usuario"}
+                </strong>
+              </div>
               <p>{comment.texto}</p>
               <div className="comment-actions">
-                <span className="muted">👍 {comment.likes?.length || 0}</span>
-                <span className="muted">👎 {comment.dislikes?.length || 0}</span>
+                <button 
+                  onClick={() => handleToggleCommentLike(post._id, comment._id)} 
+                  className="action-btn"
+                  style={{ padding: '4px 8px', fontSize: '0.9rem' }}
+                >
+                  👍 {comment.likes?.length || 0}
+                </button>
+                <button 
+                  onClick={() => handleToggleCommentDislike(post._id, comment._id)} 
+                  className="action-btn"
+                  style={{ padding: '4px 8px', fontSize: '0.9rem' }}
+                >
+                  👎 {comment.dislikes?.length || 0}
+                </button>
               </div>
             </div>
           ))}
@@ -280,10 +333,8 @@ const Home = () => {
     <div className="page">
       <div className="surface-card surface-wide">
         <div className="brand">
-          <span role="img" aria-label="book">
-            📚
-          </span>
-          Red Social de Libros
+          <img src={librumLogo} alt="Librum" style={{ height: "32px", width: "auto" }} />
+          <span>Librum</span>
         </div>
         <h1 style={{ margin: "8px 0", fontSize: "1.8rem", color: "var(--accent-strong)" }}>
           Feed

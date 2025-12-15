@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { searchBooks } from "../api/books";
 import { updateSubjects, updateFavoritos } from "../features/auth/authSlice";
+import librumLogo from "../assets/librum-logo.png";
 
 const SUBJECTS = [
   "Ficción",
@@ -181,10 +182,8 @@ const Onboarding = () => {
     <div className="page">
       <div className={cardClass}>
         <div className="brand">
-          <span role="img" aria-label="book">
-            📚
-          </span>
-          Personaliza tu perfil
+          <img src={librumLogo} alt="Librum" style={{ height: "32px", width: "auto" }} />
+          <span>Librum</span>
         </div>
 
         {step === "subjects" && subjectsSection}
