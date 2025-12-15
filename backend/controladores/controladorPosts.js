@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const Post = require('../modelos/ModeloPost');
+const { crearNotificacion } = require('./controladorNotificaciones');
 
 // POST /api/posts - Crear post
 const crearPost = asyncHandler(async (req, res) => {
@@ -149,6 +150,14 @@ const toggleLike = asyncHandler(async (req, res) => {
         post.likes = post.likes.filter((id) => id.toString() !== userId);
     } else {
         post.likes.push(req.usuario._id);
+        // Crear notificación
+        await crearNotificacion(
+            post.autor,
+            req.usuario._id,
+            'like',
+            `${req.usuario.nombre} le dio like a tu post`,
+            post._id
+        );
     }
 
     await post.save();
@@ -210,6 +219,15 @@ const crearComentario = asyncHandler(async (req, res) => {
     });
 
     await post.save();
+    
+    // Crear notificación
+    await crearNotificacion(
+        post.autor,
+        req.usuario._id,
+        'comentario',
+        `${req.usuario.nombre} comentó en tu post`,
+        post._id
+    );
     const populated = await Post.findById(post._id)
         .populate('autor', 'nombre avatarUrl')
         .populate('comentarios.autor', 'nombre avatarUrl');

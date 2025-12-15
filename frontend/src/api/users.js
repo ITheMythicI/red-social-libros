@@ -1,4 +1,5 @@
 import api from "./axios";
+import { refreshNotifications } from "../components/NotificationBell";
 
 export const getUserProfile = async (userId) => {
   const res = await api.get(`/usuarios/${userId}`);
@@ -7,6 +8,8 @@ export const getUserProfile = async (userId) => {
 
 export const followUser = async (userId) => {
   const res = await api.put(`/usuarios/${userId}/seguir`);
+  // Refrescar notificaciones cuando se sigue a un usuario
+  refreshNotifications();
   return res.data;
 };
 

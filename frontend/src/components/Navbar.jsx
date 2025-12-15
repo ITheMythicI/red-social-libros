@@ -1,6 +1,7 @@
 import { useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logout } from "../features/auth/authSlice";
+import NotificationBell from "./NotificationBell";
 
 export default function Navbar() {
   const dispatch = useDispatch();
@@ -21,6 +22,9 @@ export default function Navbar() {
         <span className="nav-icon">🏠</span>
         <span className="nav-label">Inicio</span>
       </button>
+      <div className="nav-item">
+        <NotificationBell />
+      </div>
       <button
         className={`nav-item ${location.pathname === "/perfil" ? "active" : ""}`}
         onClick={() => navigate("/perfil")}
