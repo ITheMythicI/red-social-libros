@@ -1,16 +1,34 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchMe,
   updateAvatar,
   updateName,
-  updateSubjects,
   updateFavoritos,
   updateLeyendo,
   updateLeidos,
+  updateSubjects,
 } from "../features/auth/authSlice";
 import { toast } from "react-toastify";
 import { searchBooks } from "../api/books";
+
+const SUBJECTS_OPTIONS = [
+  "Ficción",
+  "No ficción",
+  "Ciencia",
+  "Tecnología",
+  "Historia",
+  "Biografías",
+  "Negocios",
+  "Autoayuda",
+  "Fantasía",
+  "Ciencia ficción",
+  "Misterio",
+  "Romance",
+  "Educación",
+  "Arte",
+  "Viajes",
+];
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -26,8 +44,7 @@ const Profile = () => {
   const [showModal, setShowModal] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
   const [showSubjectsModal, setShowSubjectsModal] = useState(false);
-  const [tempSubjects, setTempSubjects] = useState(subjects);
-  const [tempName, setTempName] = useState(nameInput);
+  const [selectedSubjects, setSelectedSubjects] = useState(user?.subjectsFavoritos || []);
   const seguidoresCount = user?.seguidoresCount ?? user?.seguidores?.length ?? 0;
   const siguiendoCount = user?.siguiendoCount ?? user?.siguiendo?.length ?? 0;
 
@@ -55,13 +72,30 @@ const Profile = () => {
   };
 
   const handleNameSave = (e) => {
-    e?.preventDefault();
-    dispatch(updateName(tempName))
+    e.preventDefault();
+    dispatch(updateName(nameInput))
       .unwrap()
-      .then(() => toast.success("Nombre actualizado"))
+      .then(() => {
+        toast.success("Nombre actualizado");
+        setShowNameModal(false);
+      })
       .catch((err) => toast.error(err));
-    setNameInput(tempName);
-    setShowNameModal(false);
+  };
+
+  const handleSubjectsSave = () => {
+    dispatch(updateSubjects(selectedSubjects))
+      .unwrap()
+      .then(() => {
+        toast.success("Géneros actualizados");
+        setShowSubjectsModal(false);
+      })
+      .catch((err) => toast.error(err));
+  };
+
+  const toggleSubject = (subject) => {
+    setSelectedSubjects((prev) =>
+      prev.includes(subject) ? prev.filter((s) => s !== subject) : [...prev, subject]
+    );
   };
 
   const handleSearch = async (e) => {
@@ -86,30 +120,6 @@ const Profile = () => {
   };
 
   const closeModal = () => setShowModal(false);
-  const closeNameModal = () => setShowNameModal(false);
-  const openNameModal = () => {
-    setTempName(nameInput);
-    setShowNameModal(true);
-  };
-
-  const openSubjectsModal = () => {
-    setTempSubjects(subjects);
-    setShowSubjectsModal(true);
-  };
-
-  const toggleSubject = (s) => {
-    setTempSubjects((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
-    );
-  };
-
-  const handleSubjectsSave = () => {
-    dispatch(updateSubjects(tempSubjects))
-      .unwrap()
-      .then(() => toast.success("Géneros actualizados"))
-      .catch((err) => toast.error(err));
-    setShowSubjectsModal(false);
-  };
 
   const syncList = (listName, data) => {
     switch (listName) {
@@ -148,43 +158,44 @@ const Profile = () => {
 
   return (
     <div className="page">
+      <button className="btn-create-post" type="button">
+        + Crear post
+      </button>
       <div className="surface-card surface-wide">
-        <div className="profile-header">
-          <div className="avatar-circle">
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="avatar" />
-            ) : (
-              <span>{initials}</span>
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              className="avatar-input"
-              title="Subir imagen"
-              onChange={handleAvatarFile}
-            />
-          </div>
-          <div className="profile-main">
-            <div className="name-row">
-              <h2 className="name-display">{nameInput}</h2>
-              <button className="icon-button" type="button" onClick={openNameModal} title="Editar nombre">
+        <div className="profile-header-new">
+          <div className="profile-left">
+            <div className="avatar-circle-large">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="avatar" />
+              ) : (
+                <span>{initials}</span>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="avatar-input"
+                title="Subir imagen"
+                onChange={handleAvatarFile}
+              />
+            </div>
+            <div className="profile-name-section">
+              <h2>{user?.nombre || "Usuario"}</h2>
+              <button className="icon-button" onClick={() => {
+                setNameInput(user?.nombre || "");
+                setShowNameModal(true);
+              }} title="Editar nombre">
                 ✏️
               </button>
             </div>
-            <div className="counts-row">
-              <div className="count-card">
-                <strong>{seguidoresCount}</strong>
-                <span>Seguidores</span>
-              </div>
-              <div className="count-card">
-                <strong>{siguiendoCount}</strong>
-                <span>Siguiendo</span>
-              </div>
-              <div className="actions-row">
-                <button className="btn-primary" type="button">
-                  Crear post
-                </button>
-              </div>
+          </div>
+          <div className="profile-right">
+            <div className="count-card-large">
+              <strong>{seguidoresCount}</strong>
+              <span>Seguidores</span>
+            </div>
+            <div className="count-card-large">
+              <strong>{siguiendoCount}</strong>
+              <span>Siguiendo</span>
             </div>
           </div>
         </div>
@@ -192,7 +203,10 @@ const Profile = () => {
         <section>
           <div className="section-title">
             <h3>Géneros favoritos</h3>
-            <button className="icon-button" type="button" onClick={openSubjectsModal} title="Editar géneros">
+            <button className="icon-button" type="button" onClick={() => {
+              setSelectedSubjects(user?.subjectsFavoritos || []);
+              setShowSubjectsModal(true);
+            }} title="Editar géneros">
               ✏️
             </button>
           </div>
@@ -336,21 +350,23 @@ const Profile = () => {
       )}
 
       {showNameModal && (
-        <div className="modal-backdrop" onClick={closeNameModal}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-backdrop" onClick={() => setShowNameModal(false)}>
+          <div className="modal-card modal-small" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Editar nombre</h3>
-              <button className="icon-button" onClick={closeNameModal}>✕</button>
+              <button className="icon-button" onClick={() => setShowNameModal(false)}>✕</button>
             </div>
-            <form className="form" onSubmit={handleNameSave}>
+            <form onSubmit={handleNameSave}>
               <input
                 className="input"
-                value={tempName}
-                onChange={(e) => setTempName(e.target.value)}
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
                 placeholder="Tu nombre"
-                required
+                autoFocus
               />
-              <button className="btn-primary" type="submit">Guardar</button>
+              <button className="btn-primary" type="submit" style={{ marginTop: '12px' }}>
+                Guardar
+              </button>
             </form>
           </div>
         </div>
@@ -364,25 +380,20 @@ const Profile = () => {
               <button className="icon-button" onClick={() => setShowSubjectsModal(false)}>✕</button>
             </div>
             <div className="chips-grid">
-              {[
-                "Ficción","No ficción","Ciencia","Tecnología","Historia","Biografías",
-                "Negocios","Autoayuda","Fantasía","Ciencia ficción","Misterio","Romance",
-                "Educación","Arte","Viajes"
-              ].map((s) => (
+              {SUBJECTS_OPTIONS.map((subject) => (
                 <button
-                  key={s}
+                  key={subject}
                   type="button"
-                  className={`chip ${tempSubjects.includes(s) ? "chip-selected" : ""}`}
-                  onClick={() => toggleSubject(s)}
+                  className={`chip ${selectedSubjects.includes(subject) ? "chip-selected" : ""}`}
+                  onClick={() => toggleSubject(subject)}
                 >
-                  {s}
+                  {subject}
                 </button>
               ))}
             </div>
-            <div className="actions-row modal-actions">
-              <button className="btn-secondary" type="button" onClick={() => setShowSubjectsModal(false)}>Cancelar</button>
-              <button className="btn-primary" type="button" onClick={handleSubjectsSave}>Guardar</button>
-            </div>
+            <button className="btn-primary" type="button" onClick={handleSubjectsSave} style={{ marginTop: '16px' }}>
+              Guardar géneros
+            </button>
           </div>
         </div>
       )}
