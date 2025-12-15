@@ -46,37 +46,39 @@ const Home = () => {
   // Mezclar y ordenar el feed
   useEffect(() => {
     const items = [];
+    const now = Date.now();
     
-    // Agregar posts
+    // Agregar posts con su timestamp real
     posts.forEach(post => {
       items.push({ type: 'post', data: post, timestamp: new Date(post.createdAt) });
     });
 
-    // Agregar sugerencias de libros
-    suggestions.forEach((book, index) => {
+    // Agregar sugerencias de libros con timestamps aleatorios distribuidos
+    suggestions.forEach((book) => {
+      // Timestamp aleatorio entre ahora y hace 14 días para mejor distribución
+      const randomOffset = Math.random() * 14 * 24 * 60 * 60 * 1000;
       items.push({ 
         type: 'suggestion', 
         data: book, 
-        timestamp: new Date(Date.now() - index * 60000) // Espaciados por minuto
+        timestamp: new Date(now - randomOffset)
       });
     });
 
-    // Agregar todos los datos curiosos mezclados
-    curiousFacts.forEach((fact, index) => {
+    // Agregar todos los datos curiosos con timestamps aleatorios distribuidos
+    curiousFacts.forEach((fact) => {
+      // Timestamp aleatorio entre ahora y hace 14 días para mejor distribución
+      const randomOffset = Math.random() * 14 * 24 * 60 * 60 * 1000;
       items.push({ 
         type: 'curious-fact', 
         data: fact, 
-        timestamp: new Date(Date.now() - (index + 5) * 60000) // Espaciados por minuto
+        timestamp: new Date(now - randomOffset)
       });
     });
 
-    // Mezclar aleatoriamente todos los items antes de ordenar
-    const shuffled = items.sort(() => Math.random() - 0.5);
+    // Ordenar por timestamp (más reciente primero) - esto mezclará naturalmente
+    items.sort((a, b) => b.timestamp - a.timestamp);
     
-    // Ordenar por timestamp (más reciente primero)
-    shuffled.sort((a, b) => b.timestamp - a.timestamp);
-    
-    setFeedItems(shuffled);
+    setFeedItems(items);
   }, [posts, suggestions, curiousFacts]);
 
   const handleToggleLike = async (postId) => {
