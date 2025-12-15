@@ -20,14 +20,52 @@ const crearPost = asyncHandler(async (req, res) => {
     res.status(201).json(populated);
 });
 
-// GET /api/posts - Obtener todos los posts (feed)
+// GET /api/posts - Obtener feed personalizado
 const obtenerPosts = asyncHandler(async (req, res) => {
-    const posts = await Post.find()
-        .populate('autor', 'nombre avatarUrl')
-        .populate('comentarios.autor', 'nombre avatarUrl')
-        .sort({ createdAt: -1 })
-        .limit(50);
-    res.json(posts);
+    const Usuario = require('../modelos/modeloUsuarios');
+    const usuarioActual = await Usuario.findById(req.usuario._id);
+    
+    let posts = [];
+
+    // 1. Intentar posts de usuarios que sigue
+    if (usuarioActual.siguiendo && usuarioActual.siguiendo.length > 0) {
+        posts = await Post.find({ autor: { $in: usuarioActual.siguiendo } })
+            .populate('autor', 'nombre avatarUrl')
+            .populate('comentarios.autor', 'nombre avatarUrl')
+            .sort({ createdAt: -1 })
+            .limit(50);
+    }
+
+    // 2. Si no hay suficientes, agregar posts random (excluyendo los propios)
+    if (posts.length < 10) {
+        const randomPosts = await Post.find({ 
+            autor: { $ne: req.usuario._id },
+            _id: { $nin: posts.map(p => p._id) }
+        })
+            .populate('autor', 'nombre avatarUrl')
+            .populate('comentarios.autor', 'nombre avatarUrl')
+            .sort({ createdAt: -1 })
+            .limit(20);
+        
+        posts = [...posts, ...randomPosts];
+    }
+
+    // 3. Si aún no hay suficientes, agregar los propios
+    if (posts.length < 5) {
+        const ownPosts = await Post.find({ autor: req.usuario._id })
+            .populate('autor', 'nombre avatarUrl')
+            .populate('comentarios.autor', 'nombre avatarUrl')
+            .sort({ createdAt: -1 })
+            .limit(10);
+        
+        posts = [...posts, ...ownPosts];
+    }
+
+    // Eliminar duplicados y ordenar por fecha
+    const uniquePosts = Array.from(new Map(posts.map(p => [p._id.toString(), p])).values());
+    uniquePosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json(uniquePosts.slice(0, 50));
 });
 
 // GET /api/posts/usuario/:userId - Obtener posts de un usuario
