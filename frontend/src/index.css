@@ -713,3 +713,213 @@ a:hover {
 .comment-form .input {
   flex: 1;
 }
+
+/* Feed Container */
+.feed-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.feed-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feed-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 61, 46, 0.12);
+}
+
+/* Suggestion Card */
+.suggestion-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fbf8 0%, #ffffff 100%);
+  border-left: 4px solid var(--accent);
+}
+
+.suggestion-header {
+  margin-bottom: 16px;
+}
+
+.suggestion-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  background: rgba(15, 61, 46, 0.1);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+
+.suggestion-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.suggestion-book {
+  display: flex;
+  gap: 16px;
+}
+
+.suggestion-cover {
+  width: 120px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.suggestion-cover.placeholder {
+  display: grid;
+  place-items: center;
+  background: #f1f5f1;
+  font-size: 3rem;
+}
+
+.suggestion-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggestion-info h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--accent-strong);
+}
+
+.suggestion-synopsis {
+  margin: 8px 0;
+  line-height: 1.6;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.author-bio-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.author-bio {
+  margin-bottom: 12px;
+}
+
+.author-bio-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s ease;
+}
+
+.author-bio-btn:hover {
+  color: var(--accent-strong);
+}
+
+.author-bio-content {
+  margin-top: 8px;
+  padding: 12px;
+  background: #f8fbf8;
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+}
+
+.author-bio-content p {
+  margin: 6px 0;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.bio-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.bio-tag {
+  padding: 4px 10px;
+  background: rgba(15, 61, 46, 0.1);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+/* Curious Fact Card */
+.curious-fact-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+  border-left: 4px solid #f59e0b;
+}
+
+.curious-fact-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.curious-fact-icon {
+  font-size: 2rem;
+}
+
+.curious-fact-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  background: rgba(245, 158, 11, 0.15);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #b45309;
+}
+
+.curious-fact-content h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.1rem;
+  color: var(--accent-strong);
+}
+
+.curious-fact-content p {
+  margin: 0;
+  line-height: 1.7;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+/* Mejoras para post-card */
+.post-card {
+  transition: all 0.2s ease;
+}
+
+.post-card:hover {
+  border-color: var(--accent);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .suggestion-book {
+    flex-direction: column;
+  }
+
+  .suggestion-cover {
+    width: 100%;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+}
