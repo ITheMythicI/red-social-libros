@@ -22,8 +22,9 @@ export default function Navbar() {
         <span className="nav-icon">🏠</span>
         <span className="nav-label">Inicio</span>
       </button>
-      <div className="nav-item">
+      <div className="nav-item" style={{ flexDirection: 'column', alignItems: 'center' }}>
         <NotificationBell />
+        <span className="nav-label">Notificaciones</span>
       </div>
       <button
         className={`nav-item ${location.pathname === "/perfil" ? "active" : ""}`}
