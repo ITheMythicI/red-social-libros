@@ -11,6 +11,7 @@ import {
 } from "../features/auth/authSlice";
 import { toast } from "react-toastify";
 import { searchBooks } from "../api/books";
+import { createPost } from "../api/posts";
 
 const SUBJECTS_OPTIONS = [
   "Ficción",
@@ -44,7 +45,13 @@ const Profile = () => {
   const [showModal, setShowModal] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
   const [showSubjectsModal, setShowSubjectsModal] = useState(false);
+  const [showPostModal, setShowPostModal] = useState(false);
   const [selectedSubjects, setSelectedSubjects] = useState(user?.subjectsFavoritos || []);
+  const [postText, setPostText] = useState("");
+  const [postBook, setPostBook] = useState(null);
+  const [searchPostQuery, setSearchPostQuery] = useState("");
+  const [postBookResults, setPostBookResults] = useState([]);
+  const [loadingPostSearch, setLoadingPostSearch] = useState(false);
   const seguidoresCount = user?.seguidoresCount ?? user?.seguidores?.length ?? 0;
   const siguiendoCount = user?.siguiendoCount ?? user?.siguiendo?.length ?? 0;
 
@@ -96,6 +103,38 @@ const Profile = () => {
     setSelectedSubjects((prev) =>
       prev.includes(subject) ? prev.filter((s) => s !== subject) : [...prev, subject]
     );
+  };
+
+  const handleSearchPostBook = async (e) => {
+    e.preventDefault();
+    if (!searchPostQuery.trim()) return;
+    try {
+      setLoadingPostSearch(true);
+      const data = await searchBooks(searchPostQuery, 0, 8);
+      setPostBookResults(data.resultados || data.items || []);
+    } catch {
+      toast.error("No se pudo buscar libros");
+    } finally {
+      setLoadingPostSearch(false);
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!postText.trim()) {
+      toast.error("Escribe algo en tu post");
+      return;
+    }
+    try {
+      await createPost({ texto: postText, libro: postBook });
+      toast.success("Post creado");
+      setPostText("");
+      setPostBook(null);
+      setSearchPostQuery("");
+      setPostBookResults([]);
+      setShowPostModal(false);
+    } catch (err) {
+      toast.error(err.response?.data?.mensaje || "Error al crear post");
+    }
   };
 
   const handleSearch = async (e) => {
@@ -185,7 +224,7 @@ const Profile = () => {
                   ✏️
                 </button>
               </div>
-              <button className="btn-primary" type="button" style={{ marginTop: '12px', width: 'fit-content' }}>
+              <button className="btn-primary" type="button" onClick={() => setShowPostModal(true)} style={{ marginTop: '12px', width: 'fit-content' }}>
                 + Crear post
               </button>
             </div>
@@ -395,6 +434,65 @@ const Profile = () => {
             </div>
             <button className="btn-primary" type="button" onClick={handleSubjectsSave} style={{ marginTop: '16px' }}>
               Guardar géneros
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showPostModal && (
+        <div className="modal-backdrop" onClick={() => setShowPostModal(false)}>
+          <div className="modal-card modal-post" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Crear post</h3>
+              <button className="icon-button" onClick={() => setShowPostModal(false)}>✕</button>
+            </div>
+            <textarea
+              className="post-textarea"
+              placeholder="¿Qué estás pensando?"
+              value={postText}
+              onChange={(e) => setPostText(e.target.value)}
+              rows={4}
+            />
+            {postBook && (
+              <div className="selected-book-card">
+                <img src={postBook.portada} alt={postBook.titulo} className="selected-book-img" />
+                <div>
+                  <strong>{postBook.titulo}</strong>
+                  <p className="muted">{(postBook.autores || []).join(", ")}</p>
+                </div>
+                <button className="icon-button" onClick={() => setPostBook(null)}>✕</button>
+              </div>
+            )}
+            <details style={{ marginTop: '12px' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Agregar libro (opcional)</summary>
+              <form className="search-bar" onSubmit={handleSearchPostBook} style={{ marginTop: '12px' }}>
+                <input
+                  className="input"
+                  placeholder="Busca un libro..."
+                  value={searchPostQuery}
+                  onChange={(e) => setSearchPostQuery(e.target.value)}
+                />
+                <button className="btn-secondary" type="submit" disabled={loadingPostSearch}>
+                  {loadingPostSearch ? "Buscando..." : "Buscar"}
+                </button>
+              </form>
+              <div className="cards-grid" style={{ marginTop: '12px' }}>
+                {postBookResults.map((book) => (
+                  <div key={book.bookId} className="book-card-mini" onClick={() => {
+                    setPostBook({ bookId: book.bookId, titulo: book.titulo, autores: book.autores, portada: book.portada });
+                    setPostBookResults([]);
+                  }}>
+                    {book.portada && <img src={book.portada} alt={book.titulo} className="book-cover-mini" />}
+                    <div>
+                      <strong style={{ fontSize: '0.9rem' }}>{book.titulo}</strong>
+                      <p className="muted" style={{ fontSize: '0.8rem', margin: 0 }}>{(book.autores || []).join(", ")}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </details>
+            <button className="btn-primary" type="button" onClick={handleCreatePost} style={{ marginTop: '16px' }}>
+              Publicar
             </button>
           </div>
         </div>
