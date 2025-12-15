@@ -305,28 +305,6 @@ a:hover {
   color: var(--accent-strong);
 }
 
-.btn-create-post {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  padding: 14px 24px;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 1.05rem;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(15, 61, 46, 0.2);
-  transition: transform 0.15s ease, box-shadow 0.2s ease;
-  z-index: 100;
-}
-
-.btn-create-post:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(15, 61, 46, 0.25);
-}
-
 .profile-header-new {
   display: flex;
   justify-content: space-between;
@@ -376,6 +354,12 @@ a:hover {
   inset: 0;
   opacity: 0;
   cursor: pointer;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .profile-name-section {
