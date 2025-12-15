@@ -8,13 +8,13 @@
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    padding: 8px;
+    padding: 0;
     border-radius: 50%;
-    transition: background 0.2s ease;
+    transition: transform 0.2s ease;
 }
 
 .notification-bell-btn:hover {
-    background: rgba(15, 61, 46, 0.1);
+    transform: scale(1.1);
 }
 
 .notification-badge {
@@ -44,9 +44,10 @@
 }
 
 .notification-dropdown {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
     width: 380px;
     max-width: 90vw;
     background: white;
@@ -182,7 +183,7 @@
 @media (max-width: 600px) {
     .notification-dropdown {
         width: calc(100vw - 32px);
-        right: -80px;
+        max-height: 400px;
     }
 }
 
