@@ -352,6 +352,17 @@ a:hover {
   gap: 10px;
   min-width: 260px;
 }
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.name-display {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
 
 .name-form {
   display: flex;
@@ -362,12 +373,15 @@ a:hover {
 .actions-row {
   display: flex;
   gap: 10px;
+  justify-content: flex-end;
 }
 
 .counts-row {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .count-card {
@@ -381,7 +395,7 @@ a:hover {
 }
 
 .count-card strong {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   color: var(--accent-strong);
 }
 
