@@ -158,9 +158,6 @@ const Profile = () => {
 
   return (
     <div className="page">
-      <button className="btn-create-post" type="button">
-        + Crear post
-      </button>
       <div className="surface-card surface-wide">
         <div className="profile-header-new">
           <div className="profile-left">
@@ -178,13 +175,18 @@ const Profile = () => {
                 onChange={handleAvatarFile}
               />
             </div>
-            <div className="profile-name-section">
-              <h2>{user?.nombre || "Usuario"}</h2>
-              <button className="icon-button" onClick={() => {
-                setNameInput(user?.nombre || "");
-                setShowNameModal(true);
-              }} title="Editar nombre">
-                ✏️
+            <div className="profile-info">
+              <div className="profile-name-section">
+                <h2>{user?.nombre || "Usuario"}</h2>
+                <button className="icon-button" onClick={() => {
+                  setNameInput(user?.nombre || "");
+                  setShowNameModal(true);
+                }} title="Editar nombre">
+                  ✏️
+                </button>
+              </div>
+              <button className="btn-primary" type="button" style={{ marginTop: '12px', width: 'fit-content' }}>
+                + Crear post
               </button>
             </div>
           </div>
