@@ -16,6 +16,7 @@ const {
     seguirUsuario,
     bloquearUsuario,
     obtenerUsuariosBloqueados,
+    buscarUsuarios,
 } = require('../controladores/controladorUsuarios');
 
 const { proteger } = require('../middleware/authMiddleware');
@@ -27,6 +28,7 @@ router.post('/login', loginUsuario);
 // Rutas protegidas
 router.get('/actual', proteger, obtenerUsuarioActual);
 router.get('/me/contadores', proteger, obtenerContadores);
+router.get('/buscar', proteger, buscarUsuarios);
 router.put('/subjects', proteger, actualizarSubjectsFavoritos);
 router.put('/favoritos', proteger, actualizarLibrosFavoritos);
 router.put('/avatar', proteger, actualizarAvatar);

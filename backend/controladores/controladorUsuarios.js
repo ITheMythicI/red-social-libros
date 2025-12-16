@@ -426,6 +426,25 @@ const obtenerUsuariosBloqueados = asyncHandler(async (req, res) => {
     res.json(bloqueados);
 });
 
+// GET /api/usuarios/buscar?q=nombre - Buscar usuarios
+const buscarUsuarios = asyncHandler(async (req, res) => {
+    const { q } = req.query;
+
+    if (!q || !q.trim()) {
+        return res.json([]);
+    }
+
+    const usuarios = await usuario
+        .find({
+            nombre: { $regex: q.trim(), $options: 'i' },
+            _id: { $ne: req.usuario._id }, // Excluir al usuario actual
+        })
+        .select('_id nombre avatarUrl')
+        .limit(10);
+
+    res.json(usuarios);
+});
+
 const generarTokenJWT = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '30d'
@@ -448,5 +467,6 @@ module.exports = {
     seguirUsuario,
     bloquearUsuario,
     obtenerUsuariosBloqueados,
+    buscarUsuarios,
 };
 
