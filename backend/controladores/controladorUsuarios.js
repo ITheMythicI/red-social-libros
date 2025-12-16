@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const usuario = require('../modelos/modeloUsuarios');
 const { crearNotificacion } = require('./controladorNotificaciones');
+const { enviarCorreoBienvenida, enviarCorreoNuevoSeguidor } = require('../servicios/emailService');
 
 const registroUsuario = asyncHandler(async (req, res) => {
     const { 
@@ -49,6 +50,11 @@ const registroUsuario = asyncHandler(async (req, res) => {
         res.status(400);
         throw new Error('Datos de usuario no válidos');
     }else{
+        // 📧 Enviar correo de bienvenida (asíncrono, no bloquea la respuesta)
+        enviarCorreoBienvenida(user).catch(err => 
+            console.error('Error enviando correo de bienvenida:', err)
+        );
+
         res.status(201).json({
             _id: user.id,
             nombre: user.nombre,
@@ -329,6 +335,11 @@ const seguirUsuario = asyncHandler(async (req, res) => {
             usuarioActual._id,
             'seguidor',
             `${usuarioActual.nombre} comenzó a seguirte`
+        );
+
+        // 📧 Enviar correo de nuevo seguidor (asíncrono, no bloquea la respuesta)
+        enviarCorreoNuevoSeguidor(usuarioASeguir, usuarioActual).catch(err =>
+            console.error('Error enviando correo de nuevo seguidor:', err)
         );
     }
 

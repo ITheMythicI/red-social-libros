@@ -1,6 +1,8 @@
 const asyncHandler = require('express-async-handler');
 const Post = require('../modelos/ModeloPost');
 const { crearNotificacion } = require('./controladorNotificaciones');
+const { enviarCorreoLike, enviarCorreoComentario } = require('../servicios/emailService');
+const Usuario = require('../modelos/modeloUsuarios');
 
 // POST /api/posts - Crear post
 const crearPost = asyncHandler(async (req, res) => {
@@ -158,6 +160,17 @@ const toggleLike = asyncHandler(async (req, res) => {
             `${req.usuario.nombre} le dio like a tu post`,
             post._id
         );
+
+        // Enviar correo de like (asíncrono, no bloquea la respuesta)
+        // Solo enviar si el autor del post no es el mismo usuario que da like
+        if (post.autor.toString() !== userId) {
+            const autorPost = await Usuario.findById(post.autor);
+            if (autorPost && autorPost.email) {
+                enviarCorreoLike(autorPost, req.usuario, post).catch(err =>
+                    console.error('Error enviando correo de like:', err)
+                );
+            }
+        }
     }
 
     await post.save();
@@ -228,6 +241,18 @@ const crearComentario = asyncHandler(async (req, res) => {
         `${req.usuario.nombre} comentó en tu post`,
         post._id
     );
+
+    // 📧 Enviar correo de comentario (asíncrono, no bloquea la respuesta)
+    // Solo enviar si el autor del post no es el mismo usuario que comenta
+    if (post.autor.toString() !== req.usuario._id.toString()) {
+        const autorPost = await Usuario.findById(post.autor);
+        if (autorPost && autorPost.email) {
+            enviarCorreoComentario(autorPost, req.usuario, post, texto.trim()).catch(err =>
+                console.error('Error enviando correo de comentario:', err)
+            );
+        }
+    }
+
     const populated = await Post.findById(post._id)
         .populate('autor', 'nombre avatarUrl')
         .populate('comentarios.autor', 'nombre avatarUrl');
