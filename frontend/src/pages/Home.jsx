@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getPosts, toggleLike, toggleDislike, createComment, toggleLikeComment, toggleDislikeComment } from "../api/posts";
 import { getBookSuggestions, getAuthorBiography, getCuriousFacts } from "../api/books";
+import { searchUsers } from "../api/users";
 import librumLogo from "../assets/librum-logo.png";
 
 const Home = () => {
@@ -17,6 +18,9 @@ const Home = () => {
   const [commentText, setCommentText] = useState({});
   const [feedItems, setFeedItems] = useState([]);
   const [expandedAuthors, setExpandedAuthors] = useState(new Set());
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [userSearchResults, setUserSearchResults] = useState([]);
+  const [showUserResults, setShowUserResults] = useState(false);
 
   useEffect(() => {
     const loadFeed = async () => {
@@ -41,6 +45,17 @@ const Home = () => {
       }
     };
     loadFeed();
+  }, []);
+
+  // Cerrar dropdown de búsqueda al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.user-search-wrapper')) {
+        setShowUserResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Mezclar y ordenar el feed
@@ -161,6 +176,29 @@ const Home = () => {
     } else if (userId === user?._id) {
       navigate("/perfil");
     }
+  };
+
+  const handleUserSearch = async (query) => {
+    setUserSearchQuery(query);
+    if (!query.trim()) {
+      setUserSearchResults([]);
+      setShowUserResults(false);
+      return;
+    }
+    try {
+      const results = await searchUsers(query);
+      setUserSearchResults(results);
+      setShowUserResults(true);
+    } catch (err) {
+      console.error("Error searching users:", err);
+    }
+  };
+
+  const selectUser = (userId) => {
+    setShowUserResults(false);
+    setUserSearchQuery("");
+    setUserSearchResults([]);
+    handleUserClick(userId);
   };
 
   const renderPost = (post) => (
@@ -343,6 +381,38 @@ const Home = () => {
         <h1 style={{ margin: "8px 0", fontSize: "1.8rem", color: "var(--accent-strong)" }}>
           Feed
         </h1>
+
+        <div className="user-search-container">
+          <div className="user-search-wrapper">
+            <input
+              className="input"
+              placeholder="🔍 Buscar usuarios..."
+              value={userSearchQuery}
+              onChange={(e) => handleUserSearch(e.target.value)}
+              onFocus={() => userSearchResults.length > 0 && setShowUserResults(true)}
+            />
+            {showUserResults && userSearchResults.length > 0 && (
+              <div className="user-search-results">
+                {userSearchResults.map((usuario) => (
+                  <div
+                    key={usuario._id}
+                    className="user-search-item"
+                    onClick={() => selectUser(usuario._id)}
+                  >
+                    <div className="user-search-avatar">
+                      {usuario.avatarUrl ? (
+                        <img src={usuario.avatarUrl} alt={usuario.nombre} />
+                      ) : (
+                        <span>{(usuario.nombre || "U").slice(0, 2).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <strong>{usuario.nombre}</strong>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         {loading ? (
           <p className="muted">Cargando contenido...</p>
