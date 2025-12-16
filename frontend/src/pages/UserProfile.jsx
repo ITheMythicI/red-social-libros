@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchMe } from "../features/auth/authSlice";
 import { toast } from "react-toastify";
 import { getUserProfile, followUser, blockUser } from "../api/users";
 import { getUserPosts, toggleLike, toggleDislike, createComment, toggleLikeComment, toggleDislikeComment } from "../api/posts";
@@ -9,6 +10,7 @@ import Navbar from "../components/Navbar";
 const UserProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { user: currentUser } = useSelector((state) => state.auth);
   const [profileUser, setProfileUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -69,6 +71,8 @@ const UserProfile = () => {
       // Recargar perfil para actualizar contadores
       const profile = await getUserProfile(userId);
       setProfileUser(profile);
+      // Refrescar usuario actual para actualizar contadores en mi perfil
+      dispatch(fetchMe());
     } catch (err) {
       toast.error(err.response?.data?.mensaje || "Error al seguir/dejar de seguir");
     }
