@@ -74,6 +74,12 @@
     color: var(--accent-strong);
 }
 
+.notification-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .mark-all-btn {
     background: none;
     border: none;
@@ -88,6 +94,25 @@
 
 .mark-all-btn:hover {
     background: rgba(15, 61, 46, 0.1);
+}
+
+.delete-all-btn {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.delete-all-btn:hover {
+    background: rgba(231, 76, 60, 0.1);
 }
 
 .notification-list {
@@ -111,6 +136,34 @@
 
 .notification-item.unread {
     background: rgba(15, 61, 46, 0.05);
+}
+
+.delete-notification-btn {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 2;
+}
+
+.notification-item:hover .delete-notification-btn {
+    opacity: 1;
+    visibility: visible;
+}
+
+.delete-notification-btn:hover {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
 }
 
 .notification-icon {
@@ -168,9 +221,14 @@
     background: var(--accent);
     border-radius: 50%;
     position: absolute;
-    right: 16px;
+    right: 50px;
     top: 50%;
     transform: translateY(-50%);
+    z-index: 1;
+}
+
+.notification-item:hover .notification-dot {
+    opacity: 0;
 }
 
 .notification-empty {

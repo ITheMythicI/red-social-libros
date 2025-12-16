@@ -20,3 +20,13 @@ export const markAllAsRead = async () => {
     return res.data;
 };
 
+export const deleteNotification = async (id) => {
+    const res = await api.delete(`/notificaciones/${id}`);
+    return res.data;
+};
+
+export const deleteAllNotifications = async () => {
+    const res = await api.delete('/notificaciones/eliminar-todas/todas');
+    return res.data;
+};
+
