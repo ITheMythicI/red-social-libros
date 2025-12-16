@@ -11,7 +11,6 @@ const {
 const { proteger } = require('../middleware/authMiddleware');
 
 // Todas las rutas protegidas
-// IMPORTANTE: Rutas específicas ANTES de rutas con parámetros dinámicos
 router.get('/', proteger, obtenerNotificaciones);
 router.get('/no-leidas', proteger, contarNoLeidas);
 router.put('/leer-todas', proteger, marcarTodasLeidas);
