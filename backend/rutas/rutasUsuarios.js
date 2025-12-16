@@ -5,6 +5,7 @@ const {
     registroUsuario, 
     loginUsuario, 
     obtenerUsuarioActual,
+    obtenerContadores,
     obtenerUsuarioPorId,
     actualizarSubjectsFavoritos,
     actualizarLibrosFavoritos,
@@ -25,6 +26,7 @@ router.post('/login', loginUsuario);
 
 // Rutas protegidas
 router.get('/actual', proteger, obtenerUsuarioActual);
+router.get('/me/contadores', proteger, obtenerContadores);
 router.put('/subjects', proteger, actualizarSubjectsFavoritos);
 router.put('/favoritos', proteger, actualizarLibrosFavoritos);
 router.put('/avatar', proteger, actualizarAvatar);

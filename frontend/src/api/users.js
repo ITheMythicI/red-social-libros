@@ -22,3 +22,8 @@ export const getBlockedUsers = async () => {
   const res = await api.get(`/usuarios/bloqueados`);
   return res.data;
 };
+
+export const getFollowersCount = async () => {
+  const res = await api.get(`/usuarios/me/contadores`);
+  return res.data;
+};

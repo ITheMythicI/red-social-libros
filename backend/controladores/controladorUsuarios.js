@@ -120,6 +120,17 @@ const obtenerUsuarioActual = asyncHandler(async (req, res) => {
   res.json(req.usuario);
 });
 
+// GET /api/usuarios/me/contadores - Obtener solo contadores de seguidores/siguiendo
+const obtenerContadores = asyncHandler(async (req, res) => {
+    // Obtener el usuario fresco de la BD para tener los datos más actualizados
+    const usuarioActualizado = await usuario.findById(req.usuario._id).select('seguidores siguiendo');
+    
+    res.json({
+        seguidoresCount: usuarioActualizado.seguidores?.length || 0,
+        siguiendoCount: usuarioActualizado.siguiendo?.length || 0
+    });
+});
+
 // PUT /api/usuarios/subjects
 const actualizarSubjectsFavoritos = asyncHandler(async (req, res) => {
     const { subjects } = req.body;
@@ -426,6 +437,7 @@ module.exports = {
     registroUsuario, 
     loginUsuario, 
     obtenerUsuarioActual,
+    obtenerContadores,
     obtenerUsuarioPorId,
     actualizarSubjectsFavoritos,
     actualizarLibrosFavoritos,

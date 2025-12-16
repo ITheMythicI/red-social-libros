@@ -13,6 +13,7 @@ import {
 import { toast } from "react-toastify";
 import { searchBooks } from "../api/books";
 import { createPost, getUserPosts, toggleLike, toggleDislike, createComment, toggleLikeComment, toggleDislikeComment } from "../api/posts";
+import { getFollowersCount } from "../api/users";
 import Navbar from "../components/Navbar";
 
 const SUBJECTS_OPTIONS = [
@@ -58,27 +59,46 @@ const Profile = () => {
   const [userPosts, setUserPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [commentText, setCommentText] = useState({});
-  const seguidoresCount = user?.seguidoresCount ?? user?.seguidores?.length ?? 0;
-  const siguiendoCount = user?.siguiendoCount ?? user?.siguiendo?.length ?? 0;
+  // Estado local para contadores de seguidores/siguiendo que se actualiza independientemente
+  const [followCounts, setFollowCounts] = useState({
+    seguidoresCount: user?.seguidoresCount ?? user?.seguidores?.length ?? 0,
+    siguiendoCount: user?.siguiendoCount ?? user?.siguiendo?.length ?? 0
+  });
+  const seguidoresCount = followCounts.seguidoresCount;
+  const siguiendoCount = followCounts.siguiendoCount;
 
   useEffect(() => {
     if (!user) {
       dispatch(fetchMe());
+    } else {
+      // Actualizar contadores cuando el usuario se carga
+      setFollowCounts({
+        seguidoresCount: user?.seguidoresCount ?? user?.seguidores?.length ?? 0,
+        siguiendoCount: user?.siguiendoCount ?? user?.siguiendo?.length ?? 0
+      });
     }
   }, [user, dispatch]);
 
-  // Polling para actualizar contadores de seguidores/siguiendo cada 5 segundos
+  // Polling para actualizar SOLO contadores de seguidores/siguiendo cada 5 segundos
   useEffect(() => {
-    // Ejecutar fetchMe periódicamente para mantener datos actualizados
-    const interval = setInterval(() => {
-      dispatch(fetchMe());
-    }, 5000); // 5 segundos
+    const updateFollowCounts = async () => {
+      try {
+        const counts = await getFollowersCount();
+        setFollowCounts(counts);
+      } catch (error) {
+        // Silenciosamente falla, no es crítico
+        console.error('Error actualizando contadores:', error);
+      }
+    };
+
+    // Ejecutar cada 5 segundos
+    const interval = setInterval(updateFollowCounts, 5000);
 
     // Cleanup: limpiar interval cuando el componente se desmonte
     return () => {
       clearInterval(interval);
     };
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
     const loadUserPosts = async () => {
