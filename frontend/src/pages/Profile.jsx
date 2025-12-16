@@ -67,6 +67,19 @@ const Profile = () => {
     }
   }, [user, dispatch]);
 
+  // Polling para actualizar contadores de seguidores/siguiendo cada 5 segundos
+  useEffect(() => {
+    // Ejecutar fetchMe periódicamente para mantener datos actualizados
+    const interval = setInterval(() => {
+      dispatch(fetchMe());
+    }, 5000); // 5 segundos
+
+    // Cleanup: limpiar interval cuando el componente se desmonte
+    return () => {
+      clearInterval(interval);
+    };
+  }, [dispatch]);
+
   useEffect(() => {
     const loadUserPosts = async () => {
       if (user?._id) {

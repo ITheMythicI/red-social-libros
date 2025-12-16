@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '../api/notifications';
+import { getNotifications, getUnreadCount, markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications } from '../api/notifications';
 import { toast } from 'react-toastify';
 import './NotificationBell.css';
 
@@ -96,6 +96,33 @@ const NotificationBell = () => {
         }
     };
 
+    const handleDeleteNotification = async (e, notificationId) => {
+        e.stopPropagation(); // Evitar que se active el click de la notificación
+        try {
+            await deleteNotification(notificationId);
+            setNotifications(notifications.filter(n => n._id !== notificationId));
+            loadUnreadCount(); // Actualizar contador
+            toast.success('Notificación eliminada');
+        } catch (err) {
+            toast.error('Error al eliminar notificación');
+        }
+    };
+
+    const handleDeleteAll = async () => {
+        if (!window.confirm('¿Estás seguro de eliminar todas las notificaciones?')) {
+            return;
+        }
+        
+        try {
+            await deleteAllNotifications();
+            setNotifications([]);
+            setUnreadCount(0);
+            toast.success('Todas las notificaciones eliminadas');
+        } catch (err) {
+            toast.error('Error al eliminar notificaciones');
+        }
+    };
+
     const getNotificationIcon = (tipo) => {
         switch(tipo) {
             case 'like': return '👍';
@@ -130,11 +157,18 @@ const NotificationBell = () => {
                     <div className="notification-dropdown">
                         <div className="notification-header">
                             <h3>Notificaciones</h3>
-                            {unreadCount > 0 && (
-                                <button className="mark-all-btn" onClick={handleMarkAllRead}>
-                                    Marcar todas
-                                </button>
-                            )}
+                            <div className="notification-actions">
+                                {unreadCount > 0 && (
+                                    <button className="mark-all-btn" onClick={handleMarkAllRead}>
+                                        Marcar todas
+                                    </button>
+                                )}
+                                {notifications.length > 0 && (
+                                    <button className="delete-all-btn" onClick={handleDeleteAll}>
+                                        🗑️ Eliminar todas
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         <div className="notification-list">
@@ -165,6 +199,13 @@ const NotificationBell = () => {
                                                 <span className="notification-time">{getTimeAgo(notification.createdAt)}</span>
                                             </div>
                                         </div>
+                                        <button 
+                                            className="delete-notification-btn"
+                                            onClick={(e) => handleDeleteNotification(e, notification._id)}
+                                            title="Eliminar notificación"
+                                        >
+                                            ✕
+                                        </button>
                                         {!notification.leida && <div className="notification-dot" />}
                                     </div>
                                 ))

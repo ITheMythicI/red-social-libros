@@ -46,6 +46,30 @@ const marcarTodasLeidas = asyncHandler(async (req, res) => {
     res.json({ mensaje: 'Todas las notificaciones marcadas como leídas' });
 });
 
+// DELETE /api/notificaciones/:id - Eliminar una notificación
+const eliminarNotificacion = asyncHandler(async (req, res) => {
+    const notificacion = await Notificacion.findById(req.params.id);
+    
+    if (!notificacion || notificacion.receptor.toString() !== req.usuario._id.toString()) {
+        res.status(404);
+        throw new Error('Notificación no encontrada');
+    }
+    
+    await Notificacion.findByIdAndDelete(req.params.id);
+    
+    res.json({ mensaje: 'Notificación eliminada' });
+});
+
+// DELETE /api/notificaciones/eliminar-todas - Eliminar todas las notificaciones
+const eliminarTodasNotificaciones = asyncHandler(async (req, res) => {
+    const result = await Notificacion.deleteMany({ receptor: req.usuario._id });
+    
+    res.json({ 
+        mensaje: 'Todas las notificaciones eliminadas',
+        eliminadas: result.deletedCount
+    });
+});
+
 // Helper: Crear notificación
 const crearNotificacion = async (receptor, emisor, tipo, mensaje, post = null) => {
     // No notificar a ti mismo
@@ -69,6 +93,8 @@ module.exports = {
     contarNoLeidas,
     marcarComoLeida,
     marcarTodasLeidas,
+    eliminarNotificacion,
+    eliminarTodasNotificaciones,
     crearNotificacion
 };
 
